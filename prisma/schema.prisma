@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nickname  String
+  avatar    String?
+  role      String   @default("USER") // USER | ADMIN
+  status    String   @default("ACTIVE") // ACTIVE | BANNED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联
+  orders          Order[]
+  userAgents      UserAgent[]
+  activationCodes ActivationCode[]
+  chatHistories   ChatHistory[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// 系列表（盲盒系列）
+model Series {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  price       Float
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  agents Agent[]
+  orders Order[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([order])
+  @@map("series")
+}
+
+// 智能体角色表
+model Agent {
+  id           String    @id @default(cuid())
+  seriesId     String?
+  name         String
+  slug         String    @unique
+  botId        String
+  rarity       String // STANDARD | HIDDEN
+  avatar       String
+  description  String
+  abilities    String // JSON 字符串存储能力列表
+  price        Float
+  stock        Int       @default(0)
+  isActive     Boolean   @default(true)
+  systemPrompt String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 关联
+  series          Series?          @relation(fields: [seriesId], references: [id])
+  orders          Order[]
+  userAgents      UserAgent[]
+  activationCodes ActivationCode[]
+  chatHistories   ChatHistory[]
+
+  @@index([slug])
+  @@index([seriesId])
+  @@index([deletedAt])
+  @@index([isActive])
+  @@map("agents")
+}
+
+// 订单表
+model Order {
+  id               String   @id @default(cuid())
+  userId           String
+  seriesId         String? // 购买的是系列盲盒
+  agentId          String? // 兼容旧数据：单个智能体购买
+  activationCodeId String?  @unique
+  status           String   @default("PENDING") // PENDING | PAID | SHIPPED | COMPLETED | REFUNDED
+  amount           Float
+  paymentMethod    String?
+  transactionId    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // 关联
+  user           User            @relation(fields: [userId], references: [id])
+  series         Series?         @relation(fields: [seriesId], references: [id])
+  agent          Agent?          @relation(fields: [agentId], references: [id])
+  activationCode ActivationCode? @relation(fields: [activationCodeId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([seriesId])
+  @@index([agentId])
+  @@map("orders")
+}
+
+// 激活码表
+model ActivationCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  agentId     String
+  status      String    @default("UNUSED") // UNUSED | ACTIVATED | VOID
+  userId      String?
+  activatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // 关联
+  agent     Agent      @relation(fields: [agentId], references: [id])
+  user      User?      @relation(fields: [userId], references: [id])
+  order     Order?     @relation
+  userAgent UserAgent?
+
+  @@index([code])
+  @@index([status])
+  @@index([userId])
+  @@map("activation_codes")
+}
+
+// 用户拥有的智能体表
+model UserAgent {
+  id               String    @id @default(cuid())
+  userId           String
+  agentId          String
+  activationCodeId String    @unique
+  activatedAt      DateTime  @default(now())
+  lastChatAt       DateTime?
+
+  // 关联
+  user           User           @relation(fields: [userId], references: [id])
+  agent          Agent          @relation(fields: [agentId], references: [id])
+  activationCode ActivationCode @relation(fields: [activationCodeId], references: [id])
+  chatHistories  ChatHistory[]
+
+  @@unique([userId, agentId])
+  @@index([userId])
+  @@index([agentId])
+  @@map("user_agents")
+}
+
+// 对话历史表
+model ChatHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  agentId        String
+  userAgentId    String
+  role           String
+  content        String
+  conversationId String?
+  createdAt      DateTime @default(now())
+
+  // 关联
+  user      User      @relation(fields: [userId], references: [id])
+  agent     Agent     @relation(fields: [agentId], references: [id])
+  userAgent UserAgent @relation(fields: [userAgentId], references: [id])
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([conversationId])
+  @@map("chat_histories")
+}

@@ -1,0 +1,21 @@
+{
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "regions": ["hkg1"],
+  "env": {
+    "JWT_SECRET": "@jwt-secret",
+    "COZE_API_TOKEN": "@coze-api-token",
+    "COZE_BOT_ID": "@coze-bot-id",
+    "DATABASE_URL": "@database-url"
+  },
+  "build": {
+    "env": {
+      "JWT_SECRET": "@jwt-secret",
+      "COZE_API_TOKEN": "@coze-api-token",
+      "COZE_BOT_ID": "@coze-bot-id",
+      "DATABASE_URL": "@database-url"
+    }
+  }
+}
