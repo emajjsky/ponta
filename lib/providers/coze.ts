@@ -56,7 +56,7 @@ export class CozeProvider implements AIProvider {
         yield {
           content,
           isComplete,
-          conversationId: chunk.data?.conversation_id || chunk.conversation_id,
+          conversationId: (chunk.data as any)?.conversation_id || (chunk as any).conversation_id,
         }
       }
     } catch (error) {
