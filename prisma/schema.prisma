@@ -40,7 +40,9 @@ model Series {
   description String?
   coverImage  String?
   price       Float
-  order       Int      @default(0)
+  stock       Int      @default(0) // 库存数量
+  purchaseUrl String?  // 购买链接（淘宝等外部平台）
+  order       Int      @default(0) // 排序字段
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -57,22 +59,29 @@ model Series {
 
 // 智能体角色表
 model Agent {
-  id           String    @id @default(cuid())
-  seriesId     String?
-  name         String
-  slug         String    @unique
-  botId        String
-  rarity       String // STANDARD | HIDDEN
-  avatar       String
-  description  String
-  abilities    String // JSON 字符串存储能力列表
-  price        Float
-  stock        Int       @default(0)
-  isActive     Boolean   @default(true)
-  systemPrompt String?
-  deletedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  seriesId       String?
+  name           String
+  slug           String    @unique
+
+  // AI Provider配置
+  provider       String    @default("COZE") // COZE | OPENAI
+  providerConfig String    @default("{}") // JSON字符串，存储不同provider的配置
+
+  // 兼容性字段（废弃但保留）
+  botId          String?   // 废弃，改用providerConfig
+
+  rarity         String // STANDARD | HIDDEN
+  avatar         String
+  description    String
+  abilities      String // JSON 字符串存储能力列表
+  price          Float
+  stock          Int       @default(0)
+  isActive       Boolean   @default(true)
+  systemPrompt   String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // 关联
   series          Series?          @relation(fields: [seriesId], references: [id])
@@ -85,6 +94,7 @@ model Agent {
   @@index([seriesId])
   @@index([deletedAt])
   @@index([isActive])
+  @@index([provider])
   @@map("agents")
 }
 

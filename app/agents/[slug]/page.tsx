@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Star, Sparkles, ShoppingCart, ExternalLink } from 'lucide-react'
-import { AgentCard } from '@/components/shop/AgentCard'
 
 /**
  * 稀有度配置
@@ -42,6 +41,15 @@ export default async function AgentDetailPage({
   // 查询智能体详情
   const agent = await prisma.agent.findUnique({
     where: { slug },
+    include: {
+      series: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    },
   })
 
   // 智能体不存在或已删除
@@ -55,33 +63,6 @@ export default async function AgentDetailPage({
   // 获取稀有度配置
   const rarityConfig = RARITY_CONFIG[agent.rarity as keyof typeof RARITY_CONFIG]
   const RarityIcon = rarityConfig.icon
-
-  // 获取相关推荐（同稀有度的其他智能体）
-  const relatedAgents = await prisma.agent.findMany({
-    where: {
-      rarity: agent.rarity,
-      id: { not: agent.id },
-      deletedAt: null,
-    },
-    take: 3,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      rarity: true,
-      avatar: true,
-      description: true,
-      abilities: true,
-      price: true,
-    },
-  })
-
-  // 解析相关智能体的 abilities
-  const relatedAgentsParsed = relatedAgents.map((related) => ({
-    ...related,
-    abilities: JSON.parse(related.abilities),
-  }))
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
@@ -127,13 +108,6 @@ export default async function AgentDetailPage({
                     <p className="text-lg text-muted-foreground">
                       {agent.description}
                     </p>
-
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm text-muted-foreground">盲盒价格:</span>
-                      <span className={`text-4xl font-bold ${rarityConfig.textColor}`}>
-                        ¥{agent.price.toFixed(1)}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -162,40 +136,47 @@ export default async function AgentDetailPage({
             {/* 详细说明卡片 */}
             <Card>
               <CardContent className="p-6 space-y-4">
-                <h2 className="text-2xl font-bold">产品说明</h2>
+                <h2 className="text-2xl font-bold">如何激活</h2>
 
                 <div className="space-y-3 text-muted-foreground">
                   <p>
-                    这是一个<strong>实物盲盒产品</strong>，包含一个 NFC 智能卡片。
+                    获得这个AI智能体伙伴，需要通过<strong>系列盲盒</strong>或<strong>激活码</strong>！
                   </p>
-                  <p>购买流程：</p>
+                  <p>激活流程：</p>
                   <ol className="list-decimal list-inside space-y-2 ml-4">
-                    <li>在商城下单购买盲盒</li>
-                    <li>等待快递送达，收到实物盲盒</li>
-                    <li>打开盲盒，取出 NFC 智能卡片</li>
-                    <li>刮开卡片上的激活码</li>
-                    <li>在网站激活页面输入激活码</li>
+                    <li>前往商城，选择对应的系列盲盒</li>
+                    <li>购买系列盲盒，随机获得该系列中的一个智能体</li>
+                    <li>收到实物盲盒后，刮开卡片上的激活码</li>
+                    <li>在网站<strong>激活页面</strong>输入激活码</li>
                     <li>激活成功后，即可开始与 AI 智能体对话！</li>
                   </ol>
                   <p className="text-sm italic">
-                    注：每个智能体盲盒包含唯一的激活码，激活后永久有效。
+                    注：每个激活码唯一且激活后永久有效。
                   </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* 右侧：购买区域 */}
+          {/* 右侧：系列信息 */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
               <CardContent className="p-6 space-y-6">
-                {/* 价格 */}
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">盲盒价格</p>
-                  <p className={`text-5xl font-bold ${rarityConfig.textColor}`}>
-                    ¥{agent.price.toFixed(1)}
-                  </p>
+                {/* 所属系列 */}
+                {agent.seriesId && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">所属系列</p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    asChild
+                  >
+                    <Link href={`/shop/series/${agent.series.slug}`}>
+                      查看{agent.series.name}系列
+                    </Link>
+                  </Button>
                 </div>
+                )}
 
                 {/* 稀有度 */}
                 <div>
@@ -206,48 +187,18 @@ export default async function AgentDetailPage({
                   </Badge>
                 </div>
 
-                {/* 购买按钮 */}
-                <div className="space-y-3">
-                  <Button className="w-full" size="lg" asChild>
-                    <a
-                      href="https://example.com/buy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ShoppingCart className="w-5 h-5 mr-2" />
-                      前往购买
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </a>
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    将跳转到外部购买平台
-                  </p>
-                </div>
-
-                {/* 温馨提示 */}
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    <strong>温馨提示：</strong>
+                {/* 提示信息 */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>💡 提示：</strong>
                     <br />
-                    目前商城仅供展示，购买功能即将上线。
+                    通过激活码激活后，可永久使用此智能体进行对话！
                   </p>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* 相关推荐 */}
-        {relatedAgentsParsed.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">相关推荐</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedAgentsParsed.map((related) => (
-                <AgentCard key={related.id} agent={related} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

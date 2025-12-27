@@ -7,21 +7,42 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Navbar } from '@/components/layout/Navbar'
 import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from 'sonner'
+import { PasswordInput } from '@/components/ui/password-input'
+import { ImageUpload } from '@/components/admin/ImageUpload'
 
 interface Agent {
   id: string
   name: string
   slug: string
   botId: string
+  seriesId: string | null
+  rarity: string
+  avatar: string
   description: string
   price: number
   stock: number
   abilities: string[]
   systemPrompt: string
   isActive: boolean
+  provider: string // 添加provider字段
+  providerConfig: string // 添加providerConfig字段
+}
+
+interface Series {
+  id: string
+  name: string
+  slug: string
+  price: number
 }
 
 export default function EditAgentPage() {
@@ -29,18 +50,47 @@ export default function EditAgentPage() {
   const params = useParams()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [seriesList, setSeriesList] = useState<Series[]>([])
+  const [loadingSeries, setLoadingSeries] = useState(true)
 
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
+    provider: 'COZE' as 'COZE' | 'OPENAI',
     botId: '',
+    apiToken: '',
+    endpoint: '',
+    apiKey: '',
+    model: '',
+    seriesId: '',
+    rarity: 'STANDARD',
+    avatar: '',
     description: '',
-    price: '',
-    stock: '',
     abilities: '',
     systemPrompt: '',
     isActive: true,
   })
+
+  // 加载系列列表
+  useEffect(() => {
+    const loadSeries = async () => {
+      try {
+        setLoadingSeries(true)
+        const res = await fetch('/api/admin/series?includeInactive=true')
+        const data = await res.json()
+
+        if (data.success) {
+          setSeriesList(data.series)
+        }
+      } catch (error) {
+        console.error('加载系列列表失败:', error)
+      } finally {
+        setLoadingSeries(false)
+      }
+    }
+
+    loadSeries()
+  }, [])
 
   useEffect(() => {
     fetchAgent()
@@ -52,13 +102,23 @@ export default function EditAgentPage() {
       const data = await res.json()
       if (data.success) {
         const agent = data.agent
+
+        // 解析providerConfig JSON
+        const config = JSON.parse(agent.providerConfig || '{}')
+
         setFormData({
           name: agent.name,
           slug: agent.slug,
-          botId: agent.botId || '',
+          provider: (agent.provider || 'COZE') as 'COZE' | 'OPENAI',
+          botId: config.botId || agent.botId || '', // 兼容旧数据
+          apiToken: config.apiToken || '',
+          endpoint: config.endpoint || '',
+          apiKey: config.apiKey || '',
+          model: config.model || '',
+          seriesId: agent.seriesId || '', // 添加系列ID
+          rarity: agent.rarity || 'STANDARD', // 添加稀有度
+          avatar: agent.avatar || '', // 添加头像
           description: agent.description || '',
-          price: agent.price.toString(),
-          stock: agent.stock.toString(),
           abilities: agent.abilities.join(', '),
           systemPrompt: agent.systemPrompt || '',
           isActive: agent.isActive,
@@ -83,11 +143,27 @@ export default function EditAgentPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  // 处理系列选择
+  const handleSeriesChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, seriesId: value }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.slug || !formData.price) {
+    if (!formData.name || !formData.slug) {
       toast.error('请填写必填字段')
+      return
+    }
+
+    // 验证provider配置
+    if (formData.provider === 'COZE' && !formData.botId) {
+      toast.error('请填写Coze Bot ID')
+      return
+    }
+
+    if (formData.provider === 'OPENAI' && (!formData.endpoint || !formData.apiKey || !formData.model)) {
+      toast.error('请填写完整的OpenAI配置（endpoint、apiKey、model）')
       return
     }
 
@@ -99,20 +175,42 @@ export default function EditAgentPage() {
         .map((a) => a.trim())
         .filter(Boolean)
 
+      // 构建providerConfig
+      let providerConfig = {}
+
+      if (formData.provider === 'COZE') {
+        providerConfig = {
+          botId: formData.botId,
+          apiToken: formData.apiToken || process.env.COZE_API_TOKEN || '',
+        }
+      } else if (formData.provider === 'OPENAI') {
+        providerConfig = {
+          endpoint: formData.endpoint,
+          apiKey: formData.apiKey,
+          model: formData.model,
+        }
+      }
+
+      const requestBody = {
+        name: formData.name,
+        slug: formData.slug,
+        provider: formData.provider,
+        providerConfig: JSON.stringify(providerConfig),
+        seriesId: formData.seriesId || null,
+        rarity: formData.rarity,
+        avatar: formData.avatar || null,
+        description: formData.description,
+        price: 0,
+        stock: 0,
+        abilities,
+        systemPrompt: formData.systemPrompt,
+        isActive: formData.isActive,
+      }
+
       const res = await fetch(`/api/admin/agents/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          slug: formData.slug,
-          botId: formData.botId,
-          description: formData.description,
-          price: parseInt(formData.price),
-          stock: parseInt(formData.stock) || 0,
-          abilities,
-          systemPrompt: formData.systemPrompt,
-          isActive: formData.isActive,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await res.json()
@@ -163,6 +261,130 @@ export default function EditAgentPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* AI Provider 配置 */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>AI 接入方式</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  AI 提供商 <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={formData.provider}
+                  onValueChange={(value: 'COZE' | 'OPENAI') =>
+                    setFormData((prev) => ({ ...prev, provider: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择AI提供商" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COZE">
+                      Coze（推荐，支持语音、视频等多模态）
+                    </SelectItem>
+                    <SelectItem value="OPENAI">
+                      OpenAI 兼容接口（SiliconFlow、DeepSeek、Gemini等）
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.provider === 'COZE'
+                    ? 'Coze提供完整的多模态支持，包括语音、视频对话'
+                    : '支持所有兼容OpenAI API的服务商，仅支持文本对话'}
+                </p>
+              </div>
+
+              {formData.provider === 'COZE' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Coze Bot ID <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="botId"
+                      value={formData.botId}
+                      onChange={handleChange}
+                      placeholder="7428933434510770211"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      你的Coze智能体Bot ID
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      API Token（可选）
+                    </label>
+                    <PasswordInput
+                      name="apiToken"
+                      value={formData.apiToken}
+                      onChange={handleChange}
+                      placeholder="sat_xxx..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      留空将使用环境变量中的默认Token
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {formData.provider === 'OPENAI' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      API Endpoint <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="endpoint"
+                      value={formData.endpoint}
+                      onChange={handleChange}
+                      placeholder="https://api.siliconflow.cn/v1/chat/completions"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      OpenAI兼容的API端点地址
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      API Key <span className="text-red-500">*</span>
+                    </label>
+                    <PasswordInput
+                      name="apiKey"
+                      value={formData.apiKey}
+                      onChange={handleChange}
+                      placeholder="sk-xxx..."
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      API密钥
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Model <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="model"
+                      value={formData.model}
+                      onChange={handleChange}
+                      placeholder="deepseek-chat"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      模型名称，例如：deepseek-chat、gpt-4、gemini-pro
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>基本信息</CardTitle>
@@ -200,17 +422,24 @@ export default function EditAgentPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Coze Bot ID <span className="text-red-500">*</span>
+                  稀有度
                 </label>
-                <Input
-                  name="botId"
-                  value={formData.botId}
-                  onChange={handleChange}
-                  placeholder="例如：7428933434510770211"
-                  required
-                />
+                <Select
+                  value={formData.rarity}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, rarity: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择稀有度" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STANDARD">普通（STANDARD）</SelectItem>
+                    <SelectItem value="HIDDEN">隐藏（HIDDEN）</SelectItem>
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Coze AI 的 Bot ID，用于连接对话接口
+                  普通：容易抽到 | 隐藏：稀有，抽到概率低
                 </p>
               </div>
 
@@ -221,43 +450,59 @@ export default function EditAgentPage() {
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="描述这个智能体的功能和特点"
-                  rows={3}
+                  rows={2}
                 />
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>价格与库存</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  价格（元）<span className="text-red-500">*</span>
+                  头像图片
                 </label>
-                <Input
-                  name="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="9.90"
-                  required
+                <ImageUpload
+                  value={formData.avatar}
+                  onChange={(url) =>
+                    setFormData((prev) => ({ ...prev, avatar: url }))
+                  }
+                  label="头像图片"
+                  placeholder="https://example.com/avatar.png"
                 />
+                <p className="text-xs text-muted-foreground mt-2">
+                  留空保持当前头像
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">库存</label>
-                <Input
-                  name="stock"
-                  type="number"
-                  min="0"
-                  value={formData.stock}
-                  onChange={handleChange}
-                  placeholder="100"
-                />
+                <label className="block text-sm font-medium mb-2">
+                  所属系列
+                </label>
+                <Select
+                  value={formData.seriesId || "none"}
+                  onValueChange={(value) =>
+                    handleSeriesChange(value === "none" ? "" : value)
+                  }
+                  disabled={loadingSeries}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        loadingSeries
+                          ? '加载系列列表中...'
+                          : '请选择系列（可选）'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">不归属于任何系列</SelectItem>
+                    {seriesList.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} (¥{s.price})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  如果不选择系列，该智能体将单独售卖
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -283,21 +528,23 @@ export default function EditAgentPage() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  系统提示词
-                </label>
-                <Textarea
-                  name="systemPrompt"
-                  value={formData.systemPrompt}
-                  onChange={handleChange}
-                  placeholder="You are a helpful coding assistant..."
-                  rows={6}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  设置智能体的行为和角色
-                </p>
-              </div>
+              {formData.provider === 'OPENAI' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    系统提示词
+                  </label>
+                  <Textarea
+                    name="systemPrompt"
+                    value={formData.systemPrompt}
+                    onChange={handleChange}
+                    placeholder="You are a helpful coding assistant..."
+                    rows={6}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    设置智能体的行为和角色
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

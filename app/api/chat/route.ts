@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
-import { chatWithAgent, saveChatHistory, getOrCreateConversationId } from '@/lib/coze'
+import { createProvider } from '@/lib/ai-provider'
+import { saveChatHistory, getOrCreateConversationId, getChatHistory } from '@/lib/coze'
 import prisma from '@/lib/prisma'
 
 /**
@@ -87,16 +88,18 @@ export async function POST(request: NextRequest) {
     // 获取或创建对话 ID
     const conversationId = clientConversationId || await getOrCreateConversationId(payload.userId, agent.id)
 
-    // 调用 Coze API 获取流式响应
-    const stream = await chatWithAgent(
-      agent.botId,
-      message,
-      conversationId || undefined,
-      payload.userId
-    )
+    // 加载对话历史（用于OpenAI等不维护会话状态的Provider）
+    const history = await getChatHistory(payload.userId, agent.id, 20)
+
+    // 使用Provider工厂创建AI实例
+    const provider = await createProvider(agent)
+
+    // 调用AI API获取流式响应
+    const stream = provider.chat(message, conversationId || undefined, history)
 
     // 用于收集完整的 AI 回复（用于保存到数据库）
     let fullAiResponse = ''
+    let actualConversationId = conversationId || null  // 实际的conversationId（从API返回值中获取）
 
     // 创建转换流（处理 SSE 格式）
     const encoder = new TextEncoder()
@@ -105,51 +108,40 @@ export async function POST(request: NextRequest) {
         try {
           // 使用 AsyncIterable 遍历流数据
           for await (const chunk of stream) {
-            try {
-              // 处理不同的事件类型
-              if (chunk.event === 'conversation.message.delta') {
-                // 消息增量
-                const content = chunk.data.content || ''
-                fullAiResponse += content
+            // 如果chunk包含conversationId，更新它
+            if (chunk.conversationId) {
+              actualConversationId = chunk.conversationId
+            }
 
-                // 发送 SSE 格式数据
-                const sseData = `data: ${JSON.stringify({
-                  event: 'delta',
-                  content,
-                })}\n\n`
-                controller.enqueue(encoder.encode(sseData))
-              } else if (chunk.event === 'conversation.message.completed') {
-                // 消息完成
-                const finalConversationId = chunk.data.conversation_id || conversationId
+            fullAiResponse += chunk.content
 
-                // 保存聊天历史
-                if (fullAiResponse) {
-                  await saveChatHistory(
-                    userAgent.id,
-                    payload.userId,
-                    agent.id,
-                    message,
-                    fullAiResponse,
-                    finalConversationId
-                  )
-                }
+            // 发送 SSE 格式数据
+            const sseData = `data: ${JSON.stringify({
+              event: 'delta',
+              content: chunk.content,
+            })}\n\n`
+            controller.enqueue(encoder.encode(sseData))
 
-                // 发送完成事件
-                const sseData = `data: ${JSON.stringify({
-                  event: 'completed',
-                  conversationId: finalConversationId,
-                })}\n\n`
-                controller.enqueue(encoder.encode(sseData))
-              } else if (chunk.event === 'error') {
-                // 错误事件
-                const sseData = `data: ${JSON.stringify({
-                  event: 'error',
-                  error: chunk.data.msg || '对话发生错误',
-                })}\n\n`
-                controller.enqueue(encoder.encode(sseData))
+            // 如果消息完成
+            if (chunk.isComplete) {
+              // 保存聊天历史
+              if (fullAiResponse) {
+                await saveChatHistory(
+                  userAgent.id,
+                  payload.userId,
+                  agent.id,
+                  message,
+                  fullAiResponse,
+                  actualConversationId || ''
+                )
               }
-            } catch (parseError) {
-              console.error('解析数据错误:', parseError)
+
+              // 发送完成事件
+              const completeSseData = `data: ${JSON.stringify({
+                event: 'completed',
+                conversationId: actualConversationId,
+              })}\n\n`
+              controller.enqueue(encoder.encode(completeSseData))
             }
           }
 
@@ -157,7 +149,14 @@ export async function POST(request: NextRequest) {
           controller.close()
         } catch (error) {
           console.error('流处理错误:', error)
-          controller.error(error)
+
+          // 发送错误事件
+          const errorSseData = `data: ${JSON.stringify({
+            event: 'error',
+            error: error instanceof Error ? error.message : '对话发生错误',
+          })}\n\n`
+          controller.enqueue(encoder.encode(errorSseData))
+          controller.close()
         }
       },
     })

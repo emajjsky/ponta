@@ -83,7 +83,8 @@ export async function PUT(
     const {
       name,
       slug,
-      botId,
+      provider,
+      providerConfig,
       seriesId,
       rarity,
       avatar,
@@ -121,11 +122,24 @@ export async function PUT(
       }
     }
 
+    // 验证providerConfig（如果提供）
+    if (providerConfig) {
+      try {
+        JSON.parse(providerConfig)
+      } catch (e) {
+        return NextResponse.json(
+          { error: 'providerConfig必须是有效的JSON字符串' },
+          { status: 400 }
+        )
+      }
+    }
+
     // 构建更新数据
     const updateData: any = {}
     if (name) updateData.name = name
     if (slug) updateData.slug = slug
-    if (botId) updateData.botId = botId
+    if (provider) updateData.provider = provider
+    if (providerConfig) updateData.providerConfig = providerConfig
     if (seriesId !== undefined) updateData.seriesId = seriesId
     if (rarity) updateData.rarity = rarity
     if (avatar) updateData.avatar = avatar

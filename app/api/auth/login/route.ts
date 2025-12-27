@@ -82,9 +82,9 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('auth-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7天
+      secure: false,  // 改成false，HTTP环境也能设置
+      sameSite: 'lax',  // 改成lax，允许跨站导航携带Cookie
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
 

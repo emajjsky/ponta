@@ -90,12 +90,30 @@ export async function POST(request: NextRequest) {
 
     // 获取请求体
     const body = await request.json()
-    const { name, slug, botId, seriesId, rarity, avatar, description, abilities, price, stock, isActive, systemPrompt } = body
+    const { name, slug, provider, providerConfig, seriesId, rarity, avatar, description, abilities, price, stock, isActive, systemPrompt } = body
 
     // 参数验证
-    if (!name || !slug || !botId) {
+    if (!name || !slug || !provider || !providerConfig) {
       return NextResponse.json(
-        { error: '缺少必需参数：name, slug, botId' },
+        { error: '缺少必需参数：name, slug, provider, providerConfig' },
+        { status: 400 }
+      )
+    }
+
+    // 验证provider类型
+    if (!['COZE', 'OPENAI'].includes(provider)) {
+      return NextResponse.json(
+        { error: '无效的provider类型，必须是COZE或OPENAI' },
+        { status: 400 }
+      )
+    }
+
+    // 验证providerConfig是否为有效JSON
+    try {
+      JSON.parse(providerConfig)
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'providerConfig必须是有效的JSON字符串' },
         { status: 400 }
       )
     }
@@ -117,7 +135,8 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         slug,
-        botId,
+        provider,
+        providerConfig,
         seriesId: seriesId || null,
         rarity: rarity || 'STANDARD',
         avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${slug}`,

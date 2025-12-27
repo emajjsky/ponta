@@ -13,7 +13,8 @@ import {
   KeySquare,
   TrendingUp,
   DollarSign,
-  Activity
+  Activity,
+  Layers
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -52,6 +53,7 @@ export default async function AdminPage() {
     totalAgents,
     totalOrders,
     totalActivationCodes,
+    totalSeries,
     activeUsers,
     usedActivationCodes,
     totalRevenue,
@@ -60,6 +62,7 @@ export default async function AdminPage() {
     prisma.agent.count({ where: { deletedAt: null } }),
     prisma.order.count(),
     prisma.activationCode.count(),
+    prisma.series.count(),
     prisma.user.count({
       where: {
         userAgents: {
@@ -87,6 +90,14 @@ export default async function AdminPage() {
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
       href: '/admin/users',
+    },
+    {
+      title: '系列盲盒',
+      value: totalSeries,
+      icon: Layers,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+      href: '/admin/series',
     },
     {
       title: '智能体数',

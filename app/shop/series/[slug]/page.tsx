@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ShoppingBag, Star, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, ShoppingBag, Star, Sparkles, ShoppingCart, ExternalLink } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { AgentCard } from '@/components/shop/AgentCard'
 
@@ -109,14 +110,16 @@ export default async function SeriesDetailPage({
             ))}
           </div>
 
-          {/* 购买说明 */}
+          {/* 购买说明和购买区域 */}
           <div className="mt-12 p-8 bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl border-2 border-primary/20">
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-6">
               <h3 className="text-2xl font-bold">购买盲盒，随机获得其中一个角色！</h3>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 每个盲盒包含该系列中随机一个角色的激活码。
                 收到实物盲盒后，刮开包装中的激活码，即可在网站激活对应的AI智能体伙伴！
               </p>
+
+              {/* 稀有度统计 */}
               <div className="flex flex-wrap justify-center gap-4 pt-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Sparkles className="w-4 h-4 text-primary" />
@@ -126,6 +129,55 @@ export default async function SeriesDetailPage({
                   <Star className="w-4 h-4 text-yellow-500" />
                   <span>隐藏款：{agentsWithParsedAbilities.filter((a) => a.rarity === 'HIDDEN').length} 个</span>
                 </div>
+              </div>
+
+              {/* 购买按钮区域 */}
+              <div className="pt-6 space-y-4">
+                {/* 价格显示 */}
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-5xl">🎁</span>
+                  <div>
+                    <p className="text-sm text-muted-foreground">盲盒价格</p>
+                    <p className="text-4xl font-bold text-primary">
+                      ¥{series.price}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 购买按钮 */}
+                <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+                  <Button size="lg" className="text-lg px-8 py-6" asChild>
+                    <Link href={series.purchaseUrl || '#'} target="_blank" rel="noopener noreferrer">
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      立即购买
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+
+                  {/* 提示信息 */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white dark:bg-gray-800 px-4 py-3 rounded-lg">
+                    <span>💡</span>
+                    <span>购买后将获得实物盲盒，内含随机角色激活码</span>
+                  </div>
+                </div>
+
+                {/* 库存提示（如果有库存信息） */}
+                {series.stock !== null && series.stock !== undefined && series.stock > 0 && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Badge variant="outline" className="text-sm">
+                      剩余库存：{series.stock} 个
+                    </Badge>
+                  </div>
+                )}
+
+                {/* 库存不足提示 */}
+                {series.stock !== null && series.stock !== undefined && series.stock <= 0 && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-red-600 dark:text-red-400">
+                    <Badge variant="destructive" className="text-sm">
+                      暂时售罄
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
           </div>
