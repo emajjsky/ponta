@@ -117,6 +117,12 @@ async function main() {
     abilities: string[],
     systemPrompt: string
   ) => {
+    // 构建providerConfig（apiToken留空，使用环境变量）
+    const providerConfig = {
+      botId: BOT_ID,
+      apiToken: '', // 留空，使用环境变量 COZE_API_TOKEN
+    }
+
     return await prisma.agent.upsert({
       where: { slug },
       update: {},
@@ -124,7 +130,8 @@ async function main() {
         seriesId,
         name,
         slug,
-        botId: BOT_ID,
+        provider: 'COZE',
+        providerConfig: JSON.stringify(providerConfig),
         rarity,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${slug}`,
         description,
