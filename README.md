@@ -106,8 +106,7 @@
 |------|------|------|
 | Next.js API Routes | - | RESTful API |
 | Prisma ORM | 5.22.0 | 数据库ORM |
-| SQLite | - | 开发环境数据库 |
-| PostgreSQL | 16+ | 生产环境数据库 |
+| PostgreSQL | 16+ | 生产数据库 |
 | jose | latest | JWT Token生成和验证 |
 | bcrypt | latest | 密码加密 |
 | Coze API SDK | latest | AI对话(Coze Provider) |
@@ -166,8 +165,8 @@ JWT_SECRET="your-secret-key-change-in-production"
 COZE_API_TOKEN="sat_xxx..."
 COZE_BOT_ID="7428933434510770211"
 
-# 数据库连接(开发环境使用SQLite)
-DATABASE_URL="file:./dev.db"
+# 数据库连接(开发/生产环境均使用PostgreSQL)
+DATABASE_URL="postgresql://user:password@localhost:5432/pontaponta"
 
 # OpenAI兼容API配置(可选,如果使用OpenAI Provider)
 # OPENAI_API_KEY="sk-xxx..."
@@ -219,7 +218,7 @@ pnpm prisma studio
 
 ### 开发环境
 
-- **数据库**: SQLite (文件: `prisma/dev.db`)
+- **数据库**: PostgreSQL
 - **端口**: 3000
 - **热重载**: ✅ 支持
 - **API调试**: ✅ 支持
@@ -236,7 +235,7 @@ pnpm prisma studio
 | 变量名 | 必需 | 说明 | 示例 |
 |--------|------|------|------|
 | `JWT_SECRET` | ✅ | JWT签名密钥 | 强随机字符串,至少32位 |
-| `DATABASE_URL` | ✅ | 数据库连接字符串 | 开发: `file:./dev.db`<br>生产: `postgresql://user:pass@host:5432/db` |
+| `DATABASE_URL` | ✅ | 数据库连接字符串 | `postgresql://user:pass@host:5432/db` |
 | `COZE_API_TOKEN` | ❌ | Coze API密钥 | `sat_xxx...` |
 | `COZE_BOT_ID` | ❌ | Coze机器人ID | `7428933434510770211` |
 | `COZE_API_BASE_URL` | ❌ | Coze API基础URL | `https://api.coze.cn` (默认) |
@@ -788,14 +787,11 @@ pm2 restart pontaponta
 
 ### Q5: 数据库迁移失败?
 
-**A:** 从SQLite切换到PostgreSQL时:
+**A:** 数据库迁移失败时:
 
 ```bash
 # 删除旧的迁移文件
 rm -rf prisma/migrations/*
-
-# 修改schema.prisma
-# provider = "postgresql"
 
 # 重新迁移
 pnpm prisma migrate dev --name init
