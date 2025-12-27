@@ -71,9 +71,11 @@ export async function POST(request: NextRequest) {
     const filepath = join(uploadDir, filename)
     await writeFile(filepath, buffer)
 
-    // 返回图片URL（完整URL）
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://ai2shx.club'
-    const url = `${baseUrl}/uploads/${filename}`
+    // 返回图片URL
+    // 优先使用请求头中的Host构建完整URL，否则使用相对路径
+    const host = request.headers.get('host') || ''
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const url = host ? `${protocol}://${host}/uploads/${filename}` : `/uploads/${filename}`
 
     return NextResponse.json(
       {

@@ -83,7 +83,14 @@ export async function createProvider(
   switch (agent.provider) {
     case 'COZE':
       const { CozeProvider } = await import('./providers/coze')
-      return new CozeProvider(config as CozeConfig, agent.systemPrompt)
+      const cozeConfig = config as CozeConfig
+
+      // 如果apiToken为空，使用环境变量中的默认值
+      if (!cozeConfig.apiToken || cozeConfig.apiToken.trim() === '') {
+        cozeConfig.apiToken = process.env.COZE_API_TOKEN || ''
+      }
+
+      return new CozeProvider(cozeConfig, agent.systemPrompt)
 
     case 'OPENAI':
       const { OpenAIProvider } = await import('./providers/openai')
