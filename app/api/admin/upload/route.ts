@@ -71,10 +71,9 @@ export async function POST(request: NextRequest) {
     const filepath = join(uploadDir, filename)
     await writeFile(filepath, buffer)
 
-    // 返回图片URL（完整URL，支持相对路径和绝对路径）
-    // 开发环境使用相对路径，生产环境使用环境变量配置的完整URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
-    const url = baseUrl ? `${baseUrl}/uploads/${filename}` : `/uploads/${filename}`
+    // 返回图片URL（完整URL）
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://ai2shx.club'
+    const url = `${baseUrl}/uploads/${filename}`
 
     return NextResponse.json(
       {
