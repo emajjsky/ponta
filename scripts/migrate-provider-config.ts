@@ -16,14 +16,12 @@ const prisma = new PrismaClient()
 async function migrateAgents() {
   console.log('🔄 开始迁移智能体数据...')
 
-  // 获取所有智能体
+  // 获取所有需要迁移的智能体（provider或providerConfig为空）
   const agents = await prisma.agent.findMany({
     where: {
       OR: [
-        { provider: null },
-        { provider: '' },
-        { providerConfig: null },
-        { providerConfig: '' },
+        { provider: { equals: '', mode: 'insensitive' } },
+        { providerConfig: { equals: '', mode: 'insensitive' } },
       ],
     },
   })
