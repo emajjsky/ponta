@@ -775,6 +775,130 @@ curl http://localhost:3000/api/shop/series
 
 **预防措施**：每次修改数据库后，如果商城页面没有更新，执行上述清除缓存步骤
 
+### 问题8：图片上传成功但无法显示（404错误）
+
+**症状**：
+- 后台上传图片成功，文件显示"图片加载失败，请检查url"
+- 图片URL显示为相对路径（如`/uploads/xxx.jpg`）
+- 直接访问图片URL返回404错误
+- `curl -I http://localhost/uploads/xxx.jpg` 返回404
+
+**原因分析**：
+1. **相对路径问题**：上传API返回的URL是相对路径（`/uploads/xxx.jpg`），浏览器无法正确解析
+2. **Next.js缓存问题**：生产环境build后，新上传的文件不在构建缓存中，导致404
+
+**完整解决方案**：
+
+#### 步骤1：修改上传API返回完整URL
+
+**编辑上传API文件**：
+```bash
+cd /opt/pontaponta
+nano app/api/admin/upload/route.ts
+```
+
+**找到第74-75行**，修改返回URL逻辑：
+
+```typescript
+// 返回图片URL（完整URL）
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://ai2shx.club'
+const url = `${baseUrl}/uploads/${filename}`
+```
+
+**保存并退出**
+
+#### 步骤2：配置环境变量（可选）
+
+如果使用环境变量配置域名：
+
+```bash
+# 编辑.env文件
+nano /opt/pontaponta/.env
+
+# 添加或修改
+NEXT_PUBLIC_BASE_URL=http://你的域名.com
+# 或
+NEXT_PUBLIC_BASE_URL=http://你的服务器IP
+```
+
+#### 步骤3：重新构建和重启
+
+```bash
+cd /opt/pontaponta
+
+# 停止PM2
+pm2 stop pontaponta
+
+# 清除Next.js缓存（重要！）
+rm -rf .next
+
+# 重新构建
+pnpm build
+
+# 重启应用
+pm2 start pontaponta
+
+# 查看日志确认启动成功
+pm2 logs pontaponta --lines 20
+```
+
+#### 步骤4：验证图片访问
+
+```bash
+# 测试图片访问（使用实际文件名）
+curl -I http://localhost:3000/uploads/1766836471427-m8n7q5netf.jpg
+
+# 应该返回 200 OK
+# HTTP/1.1 200 OK
+# Content-Type: image/jpeg
+```
+
+#### 步骤5：在浏览器中测试
+
+1. 登录后台管理页面
+2. 上传一张新图片
+3. 检查返回的URL是否包含完整域名（如`http://ai2shx.club/uploads/xxx.jpg`）
+4. 验证图片能正常显示
+
+**重要说明**：
+
+✅ **为什么必须重新构建？**
+- Next.js生产环境的`public`目录文件在build时被处理
+- 新上传的文件不在构建缓存中，需要清除`.next`目录重新build
+- 开发环境（`pnpm dev`）不需要这个步骤，因为它是动态读取的
+
+✅ **图片文件存储位置**：
+- 文件保存路径：`/opt/pontaponta/public/uploads/`
+- Next.js会自动将`public`目录映射到网站根路径
+- 不需要配置Nginx的`location /uploads/`块
+
+✅ **Nginx配置保持简洁**：
+```nginx
+server {
+    listen 80;
+    server_name ai2shx.club www.ai2shx.club;
+
+    # 所有请求都转发给Next.js处理（包括静态文件）
+    location / {
+        proxy_pass http://localhost:3000;
+        # ... 其他proxy配置
+    }
+
+    client_max_body_size 10M;
+}
+```
+
+❌ **常见错误**：
+1. 尝试使用Nginx直接服务uploads文件 → 不推荐，会有权限问题
+2. 把uploads目录放在`/root`下 → www-data用户无法访问
+3. 不清除`.next`缓存就重新build → 新文件仍然无法访问
+4. 返回相对路径而不是完整URL → 浏览器无法正确解析
+
+**预防措施**：
+- 每次上传图片后，如果无法显示，执行"清除缓存+重新构建+重启"流程
+- 始终使用完整URL（包含域名）而不是相对路径
+- 确保`public/uploads/`目录存在且有正确的权限
+
 ---
 
 ## 维护命令
@@ -1226,7 +1350,11 @@ echo "访问地址: http://$(curl -s ifconfig.me):3000"
 
 ---
 
-**最后更新**：2025-12-27（添加完整商城数据导入步骤和缓存问题解决方案）
+**最后更新**：2025-12-27（添加图片上传404问题完整解决方案）
 **文档维护者**：老王 (AI技术助手)
+
+**更新历史**：
+- v1.1 (2025-12-27): 新增问题8：图片上传成功但无法显示404错误的完整解决方案
+- v1.0 (2025-12-26): 初始版本，包含完整部署流程、商城数据导入和缓存问题解决方案
 
 **艹，老王我花了老长时间写这个文档，从零开始到完成部署，每一步都写得清清楚楚！按照这个文档，你肯定能把项目部署到腾讯云上！🎉**
