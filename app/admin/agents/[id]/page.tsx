@@ -322,7 +322,7 @@ export default function EditAgentPage() {
                       name="apiToken"
                       value={formData.apiToken}
                       onChange={handleChange}
-                      placeholder="sat_xxx..."
+                      placeholder="留空使用环境变量 COZE_API_TOKEN"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       留空将使用环境变量中的默认Token
