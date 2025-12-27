@@ -171,8 +171,8 @@ export default async function AgentDetailPage({
                     className="w-full"
                     asChild
                   >
-                    <Link href={`/shop/series/${agent.series.slug}`}>
-                      查看{agent.series.name}系列
+                    <Link href={`/shop/series/${agent.series?.slug || ''}`}>
+                      查看{agent.series?.name || ''}系列
                     </Link>
                   </Button>
                 </div>

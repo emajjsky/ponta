@@ -50,7 +50,7 @@ export class CozeProvider implements AIProvider {
 
       // 处理流式响应
       for await (const chunk of stream) {
-        const content = chunk.data?.content || ''
+        const content = (chunk.data as any)?.content || ''
         const isComplete = chunk.event === 'conversation.message.completed'
 
         yield {

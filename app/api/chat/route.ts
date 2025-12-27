@@ -92,7 +92,10 @@ export async function POST(request: NextRequest) {
     const history = await getChatHistory(payload.userId, agent.id, 20)
 
     // 使用Provider工厂创建AI实例
-    const provider = await createProvider(agent)
+    const provider = await createProvider({
+      ...agent,
+      systemPrompt: agent.systemPrompt || undefined,
+    })
 
     // 调用AI API获取流式响应
     const stream = provider.chat(message, conversationId || undefined, history)
