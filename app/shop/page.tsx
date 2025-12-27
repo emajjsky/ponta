@@ -19,6 +19,13 @@ export interface Series {
 }
 
 /**
+ * 动态渲染，不缓存
+ * 每次请求都查询数据库，确保新增系列即时显示
+ */
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+/**
  * 盲盒商城页面
  */
 export default async function ShopPage() {

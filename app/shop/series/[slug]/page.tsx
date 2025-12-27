@@ -188,22 +188,11 @@ export default async function SeriesDetailPage({
 }
 
 /**
- * 生成静态参数
+ * 动态渲染，不预生成静态页面
+ * 每次请求都查询数据库，确保新增系列/智能体即时显示
  */
-export async function generateStaticParams() {
-  const series = await prisma.series.findMany({
-    where: {
-      isActive: true,
-    },
-    select: {
-      slug: true,
-    },
-  })
-
-  return series.map((series) => ({
-    slug: series.slug,
-  }))
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 /**
  * 生成元数据
