@@ -12,23 +12,38 @@ datasource db {
 
 // 用户表
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  nickname  String
-  avatar    String?
-  role      String   @default("USER") // USER | ADMIN
-  status    String   @default("ACTIVE") // ACTIVE | BANNED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  uid             Int      @unique // 数字UID，如100001
+  email           String   @unique
+  password        String
+  nickname        String
+  avatar          String?
+  bio             String?  // 个人简介
+  role            String   @default("USER") // USER | ADMIN
+  status          String   @default("ACTIVE") // ACTIVE | BANNED
+
+  // 等级系统
+  level           Int      @default(1) // 用户等级
+  experience      Int      @default(0) // 经验值
+
+  // 统计数据（冗余字段，提升查询性能）
+  totalAgents     Int      @default(0) // 拥有的智能体总数
+  totalChats      Int      @default(0) // 对话总次数
+  totalAchievements Int    @default(0) // 获得的成就数
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // 关联
   orders          Order[]
   userAgents      UserAgent[]
   activationCodes ActivationCode[]
   chatHistories   ChatHistory[]
+  achievements    UserAchievement[]
 
   @@index([email])
+  @@index([uid])
+  @@index([level])
   @@map("users")
 }
 
@@ -189,4 +204,41 @@ model ChatHistory {
   @@index([agentId])
   @@index([conversationId])
   @@map("chat_histories")
+}
+
+// 成就表
+model Achievement {
+  id          String   @id @default(cuid())
+  slug        String   @unique // 成就唯一标识
+  name        String   // 成就名称
+  description String   // 成就描述
+  icon        String   // 成就图标
+  category    String   // 成就分类：COLLECTION | INTERACTION | SOCIAL | CHALLENGE
+  rarity      String   @default("COMMON") // RARITY: COMMON | RARE | EPIC | LEGENDARY
+  rewardXp    Int      @default(0) // 奖励经验值
+  createdAt   DateTime @default(now())
+
+  // 关联
+  userAchievements UserAchievement[]
+
+  @@index([slug])
+  @@index([category])
+  @@map("achievements")
+}
+
+// 用户成就关联表
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  // 关联
+  user       User       @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@map("user_achievements")
 }
