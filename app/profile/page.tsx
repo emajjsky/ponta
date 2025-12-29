@@ -6,16 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
 import {
-  Trophy,
   MessageCircle,
   Box,
-  Star,
-  TrendingUp,
-  Award,
-  Settings,
-  Edit
+  Edit,
+  ArrowLeft,
+  Trophy
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -45,15 +41,6 @@ export default async function ProfilePage() {
             activatedAt: 'desc',
           },
         },
-        achievements: {
-          include: {
-            achievement: true,
-          },
-          orderBy: {
-            unlockedAt: 'desc',
-          },
-          take: 8, // 只显示最近8个
-        },
       },
     })
 
@@ -61,13 +48,19 @@ export default async function ProfilePage() {
       redirect('/login')
     }
 
-    // 计算等级进度
-    const { getLevelProgress } = await import('@/lib/user-level')
-    const levelProgress = getLevelProgress(user.experience)
-
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
         <div className="container mx-auto px-4 py-8">
+          {/* 返回按钮 */}
+          <div className="mb-6">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                返回首页
+              </Link>
+            </Button>
+          </div>
+
           <div className="max-w-6xl mx-auto space-y-6">
             {/* 用户信息卡片 */}
             <Card>
@@ -102,15 +95,7 @@ export default async function ProfilePage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{user.level}</div>
-                    <div className="text-sm text-muted-foreground">等级</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{user.experience}</div>
-                    <div className="text-sm text-muted-foreground">经验值</div>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary">{user.totalAgents}</div>
                     <div className="text-sm text-muted-foreground">智能体</div>
@@ -120,25 +105,11 @@ export default async function ProfilePage() {
                     <div className="text-sm text-muted-foreground">对话</div>
                   </div>
                 </div>
-
-                {/* 等级进度条 */}
-                <div className="mt-6">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">等级进度</span>
-                    <span className="font-medium">{levelProgress.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-3">
-                    <div
-                      className="bg-primary h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${levelProgress}%` }}
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
             {/* 统计数据 */}
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center">
@@ -162,19 +133,6 @@ export default async function ProfilePage() {
                 <CardContent>
                   <div className="text-3xl font-bold">{user.totalChats}</div>
                   <p className="text-xs text-muted-foreground mt-1">累计对话次数</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <Award className="w-4 h-4 mr-2" />
-                    成就徽章
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{user.totalAchievements}</div>
-                  <p className="text-xs text-muted-foreground mt-1">已解锁成就</p>
                 </CardContent>
               </Card>
             </div>
@@ -224,47 +182,6 @@ export default async function ProfilePage() {
                           </CardContent>
                         </Card>
                       </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* 最近获得的成就 */}
-            {user.achievements.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Star className="w-5 h-5 mr-2" />
-                    最近获得的成就
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {user.achievements.map((userAchievement) => (
-                      <div
-                        key={userAchievement.id}
-                        className="text-center p-4 bg-secondary/50 rounded-lg"
-                      >
-                        <div className="text-4xl mb-2">
-                          {userAchievement.achievement.icon}
-                        </div>
-                        <div className="font-medium text-sm">
-                          {userAchievement.achievement.name}
-                        </div>
-                        <Badge
-                          variant={
-                            userAchievement.achievement.rarity === 'LEGENDARY'
-                              ? 'destructive'
-                              : userAchievement.achievement.rarity === 'EPIC'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                          className="mt-1 text-xs"
-                        >
-                          {userAchievement.achievement.rarity}
-                        </Badge>
-                      </div>
                     ))}
                   </div>
                 </CardContent>

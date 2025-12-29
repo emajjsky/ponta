@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
 import { activateAgent } from '@/lib/activation'
 import prisma from '@/lib/prisma'
-import { addExperience, EXP_REWARDS } from '@/lib/user-level'
 
 /**
  * POST /api/activate
@@ -52,33 +51,16 @@ export async function POST(request: NextRequest) {
 
     if (result.success) {
       // 更新用户统计数据
-      const agent = result.agent!
-      const userAgent = result.userAgent!
-
-      // 判断智能体稀有度
-      let expType = 'ACTIVATE_AGENT'
-      if (agent.rarity === 'HIDDEN') {
-        expType = 'ACTIVATE_HIDDEN_AGENT'
-      } else if (agent.rarity === 'RARE') {
-        expType = 'ACTIVATE_RARE_AGENT'
-      }
-
-      // 获取用户当前经验值
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { experience: true, totalAgents: true },
+        select: { totalAgents: true },
       })
 
       if (user) {
-        // 计算新经验值和等级
-        const expResult = addExperience(user.experience, EXP_REWARDS[expType])
-
-        // 更新用户数据
+        // 更新智能体数量
         await prisma.user.update({
           where: { id: payload.userId },
           data: {
-            experience: expResult.newExp,
-            level: expResult.newLevel,
             totalAgents: user.totalAgents + 1,
           },
         })
