@@ -139,6 +139,37 @@ export async function POST(request: NextRequest) {
                 )
               }
 
+              // 更新用户统计数据（异步执行，不阻塞响应）
+              ;(async () => {
+                try {
+                  const { EXP_REWARDS } = await import('@/lib/user-level')
+                  const { addExperience } = await import('@/lib/user-level')
+
+                  // 获取用户当前数据
+                  const user = await prisma.user.findUnique({
+                    where: { id: payload.userId },
+                    select: { experience: true, totalChats: true },
+                  })
+
+                  if (user) {
+                    // 计算新经验值
+                    const expResult = addExperience(user.experience, EXP_REWARDS.CHAT)
+
+                    // 更新用户数据
+                    await prisma.user.update({
+                      where: { id: payload.userId },
+                      data: {
+                        experience: expResult.newExp,
+                        level: expResult.newLevel,
+                        totalChats: user.totalChats + 1,
+                      },
+                    })
+                  }
+                } catch (error) {
+                  console.error('更新用户统计数据错误:', error)
+                }
+              })()
+
               // 发送完成事件
               const completeSseData = `data: ${JSON.stringify({
                 event: 'completed',

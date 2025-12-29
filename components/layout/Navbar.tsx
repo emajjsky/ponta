@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Gift, ShoppingBag, User, LogOut, Menu, X, Settings } from 'lucide-react'
+import { Gift, ShoppingBag, User, LogOut, Menu, X, Settings, Award } from 'lucide-react'
 
 /**
  * 导航栏组件
@@ -36,6 +36,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: '首页', public: true },
     { href: '/shop', label: '商城', public: true },
+    { href: '/profile', label: '个人中心', public: false },
     { href: '/my-agents', label: '我的智能体', public: false },
     { href: '/activate', label: '激活', public: false },
   ]
@@ -106,6 +107,12 @@ export function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <Award className="mr-2 h-4 w-4" />
+                      个人中心
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/my-agents" className="cursor-pointer">
                       <Gift className="mr-2 h-4 w-4" />

@@ -29,6 +29,7 @@ async function main() {
     where: { email: 'admin@ponta-ponta.com' },
     update: { password: passwordHash },
     create: {
+      uid: 100001,
       email: 'admin@ponta-ponta.com',
       password: passwordHash,
       nickname: '管理员',
@@ -40,6 +41,7 @@ async function main() {
     where: { email: 'test@example.com' },
     update: { password: passwordHash },
     create: {
+      uid: 100002,
       email: 'test@example.com',
       password: passwordHash,
       nickname: '测试用户',
