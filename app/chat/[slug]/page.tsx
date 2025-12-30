@@ -12,7 +12,10 @@ import { ClearChatButton } from '@/components/chat/ClearChatButton'
 
 /**
  * 对话页面
+ * 强制动态渲染（因为需要读取cookies进行认证）
  */
+export const dynamic = 'force-dynamic'
+
 export default async function ChatPage({
   params,
 }: {
@@ -121,20 +124,6 @@ export default async function ChatPage({
       </div>
     </div>
   )
-}
-
-/**
- * 生成静态参数
- */
-export async function generateStaticParams() {
-  const agents = await prisma.agent.findMany({
-    where: { deletedAt: null },
-    select: { slug: true },
-  })
-
-  return agents.map((agent) => ({
-    slug: agent.slug,
-  }))
 }
 
 /**

@@ -1,27 +1,102 @@
-root@VM-12-4-ubuntu:~/pontaponta# npx tsx scripts/seed-production.ts
-Need to install the following packages:
-tsx@4.21.0
-Ok to proceed? (y) y
 
-🚀 开始生成完整种子数据（PostgreSQL）...
-🧹 清理现有数据（PostgreSQL外键约束）...
-  ✅ 数据清理完成
-👤 创建用户...
-❌ 种子数据生成失败: PrismaClientKnownRequestError: 
-Invalid `prisma.user.upsert()` invocation in
-/root/pontaponta/scripts/seed-production.ts:37:39
-
-  34 
-  35 console.log('👤 创建用户...')
-  36 
-→ 37 const adminUser = await prisma.user.upsert(
-Unique constraint failed on the fields: (`uid`)
-    at $n.handleRequestError (/root/pontaponta/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client/runtime/library.js:121:7315)
-    at $n.handleAndLogRequestError (/root/pontaponta/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client/runtime/library.js:121:6623)
-    at $n.request (/root/pontaponta/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client/runtime/library.js:121:6307)
-    at async l (/root/pontaponta/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client/runtime/library.js:130:9633)
-    at async main (/root/pontaponta/scripts/seed-production.ts:37:21) {
-  code: 'P2002',
-  clientVersion: '5.22.0',
-  meta: { modelName: 'User', target: [ 'uid' ] }
-}
+/root/.pm2/logs/pontaponta-error.log last 100 lines:
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ao-bing" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=gazelle" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=guan-yu" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=nezha" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=cao-cao" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=mrbig" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=judy-hopps" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=destined-one" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-mebius" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=nick-wilde" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=chief-bogo" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-z" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-ginga" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-zero" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=flash" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-tiga" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=shen-gongbao" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=ultraman-noah" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=yellow-brow" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=zhuge-liang" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | ⨯ The requested resource "https://api.dicebear.com/7.x/avataaars/svg?seed=black-bear" has type "image/svg+xml" but dangerouslyAllowSVG is disabled. Consider adding the "unoptimized" property to the <Image>.
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
+0|pontapon | ⨯ [Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+0|pontapon |   digest: 'DYNAMIC_SERVER_USAGE'
+0|pontapon | }
