@@ -4,11 +4,21 @@ import { zhCN } from 'date-fns/locale'
 import { Bot, User } from 'lucide-react'
 
 /**
+ * 图片附件接口
+ */
+export interface ImageAttachment {
+  id: string
+  base64: string
+  name: string
+}
+
+/**
  * 聊天消息组件属性
  */
 export interface ChatMessageProps {
   role: 'user' | 'assistant'
   content: string
+  images?: ImageAttachment[] // 图片附件
   timestamp?: number
   isStreaming?: boolean // 是否正在流式输出
   agentAvatar?: string // AI 头像
@@ -17,11 +27,12 @@ export interface ChatMessageProps {
 
 /**
  * 聊天消息组件
- * 展示单条聊天消息
+ * 展示单条聊天消息（支持图片）
  */
 export function ChatMessage({
   role,
   content,
+  images = [],
   timestamp,
   isStreaming = false,
   agentAvatar,
@@ -66,6 +77,20 @@ export function ChatMessage({
           {!isUser && !isStreaming && agentName && (
             <div className="text-xs font-semibold mb-1 opacity-70">
               {agentName}
+            </div>
+          )}
+
+          {/* 图片附件（显示在文本上方） */}
+          {images && images.length > 0 && (
+            <div className={`flex flex-wrap gap-2 mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+              {images.map((image) => (
+                <img
+                  key={image.id}
+                  src={image.base64}
+                  alt={image.name}
+                  className="max-w-[200px] max-h-[200px] rounded-lg object-cover"
+                />
+              ))}
             </div>
           )}
 

@@ -5,9 +5,18 @@ import { ChatMessage, type ChatMessageProps } from './ChatMessage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, Image as ImageIcon, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+
+/**
+ * 图片接口
+ */
+interface ImageAttachment {
+  id: string
+  base64: string
+  name: string
+}
 
 /**
  * 聊天界面组件属性
@@ -20,7 +29,7 @@ export interface ChatInterfaceProps {
 
 /**
  * 聊天界面组件
- * 完整的对话功能
+ * 完整的对话功能 + 图片上传 + 语音控制
  */
 export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfaceProps) {
   const { user } = useAuth()
@@ -29,6 +38,11 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+
+  // 图片相关状态
+  const [images, setImages] = useState<ImageAttachment[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -77,13 +91,74 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   }, [messages])
 
   /**
-   * 发送消息
+   * 处理图片上传
+   */
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    // 限制最多上传3张图片
+    if (images.length + files.length > 3) {
+      toast.error('最多只能上传3张图片')
+      return
+    }
+
+    try {
+      for (const file of Array.from(files)) {
+        // 验证文件类型
+        if (!file.type.startsWith('image/')) {
+          toast.error(`文件 "${file.name}" 不是图片格式`)
+          continue
+        }
+
+        // 验证文件大小（最大10MB）
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`图片 "${file.name}" 太大，请选择小于10MB的图片`)
+          continue
+        }
+
+        // 转换为Base64
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string
+          const newImage: ImageAttachment = {
+            id: `${Date.now()}-${Math.random()}`,
+            base64,
+            name: file.name,
+          }
+          setImages((prev) => [...prev, newImage])
+        }
+        reader.readAsDataURL(file)
+      }
+
+      toast.success(`成功添加 ${Math.min(files.length, 3 - images.length)} 张图片`)
+    } catch (error) {
+      console.error('图片上传错误:', error)
+      toast.error('图片上传失败')
+    }
+
+    // 清空input，允许重复上传同一文件
+    e.target.value = ''
+  }
+
+  /**
+   * 删除图片
+   */
+  const handleRemoveImage = (imageId: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== imageId))
+  }
+
+  /**
+   * 发送消息（支持图片）
    */
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading || !user) return
+    if ((!inputValue.trim() && images.length === 0) || isLoading || !user) return
 
     const userMessage = inputValue.trim()
+    const currentImages = [...images]
+
     setInputValue('')
+    setImages([])
     setIsLoading(true)
     setIsStreaming(false)
 
@@ -91,6 +166,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
     const userMessageObj: ChatMessageProps = {
       role: 'user',
       content: userMessage,
+      images: currentImages, // 包含图片
       timestamp: Date.now(),
     }
     setMessages((prev) => [...prev, userMessageObj])
@@ -108,7 +184,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
       // 创建新的 AbortController
       abortControllerRef.current = new AbortController()
 
-      // 发送消息到 API
+      // 发送消息到 API（包含图片）
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -119,6 +195,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           agentSlug,
           message: userMessage,
           conversationId: conversationId || undefined,
+          images: currentImages, // 发送图片数据
         }),
         signal: abortControllerRef.current.signal,
       })
@@ -197,6 +274,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
         // 移除失败的 AI 消息
         setMessages((prev) => prev.slice(0, -1))
+
+        // 恢复图片
+        setImages(currentImages)
       }
     } finally {
       setIsLoading(false)
@@ -237,6 +317,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
               <p className="text-muted-foreground">
                 开始与 {agentName} 对话吧！
               </p>
+              <p className="text-xs text-muted-foreground">
+                支持文字对话和图片分析
+              </p>
             </div>
           </div>
         )}
@@ -261,15 +344,57 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
       {/* 输入框 */}
       <div className="border-t p-4">
+        {/* 图片预览区 */}
+        {images.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {images.map((image) => (
+              <div key={image.id} className="relative group">
+                <img
+                  src={image.base64}
+                  alt={image.name}
+                  className="h-20 w-20 object-cover rounded-lg border"
+                />
+                <button
+                  onClick={() => handleRemoveImage(image.id)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 输入框 + 按钮 */}
         <div className="flex gap-2">
+          {/* 图片上传按钮 */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            size="icon"
+            disabled={isLoading}
+            title="上传图片（最多3张）"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </Button>
+
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`和 ${agentName} 聊天...`}
+            placeholder={`和 ${agentName} 聊天...${images.length > 0 ? ` (已选${images.length}张图片)` : ''}`}
             disabled={isLoading}
             className="flex-1"
           />
+
           {isStreaming ? (
             <Button onClick={handleStopGeneration} variant="outline">
               停止
@@ -277,7 +402,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           ) : (
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={(!inputValue.trim() && images.length === 0) || isLoading}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -287,8 +412,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
             </Button>
           )}
         </div>
+
         <p className="text-xs text-muted-foreground mt-2">
-          按 Enter 发送，Shift + Enter 换行
+          按 Enter 发送，Shift + Enter 换行 • 支持上传图片进行分析
         </p>
       </div>
     </div>
