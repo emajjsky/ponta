@@ -63,7 +63,7 @@ export class CozeProvider implements AIProvider {
 
       const stream = await this.client.chat.stream({
         bot_id: this.botId,
-        additional_messages,
+        additional_messages: additionalMessages,
         conversation_id: conversationId || undefined,
         user_id: undefined, // 可以后续扩展
       })
