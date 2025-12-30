@@ -269,6 +269,7 @@ export function ExchangeMarketClient({
                         alt={exchange.providedAgent.name}
                         fill
                         className="rounded-lg object-cover"
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -299,6 +300,7 @@ export function ExchangeMarketClient({
                         alt={exchange.wantedAgent.name}
                         fill
                         className="rounded-lg object-cover"
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1 min-w-0">

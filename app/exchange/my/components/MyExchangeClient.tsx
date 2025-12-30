@@ -250,6 +250,7 @@ export function MyExchangeClient() {
                                   alt={exchange.providedAgent.name}
                                   fill
                                   className="rounded-lg object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -272,6 +273,7 @@ export function MyExchangeClient() {
                                   alt={exchange.wantedAgent.name}
                                   fill
                                   className="rounded-lg object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -388,6 +390,7 @@ export function MyExchangeClient() {
                                   alt={proposal.myAgent.name}
                                   fill
                                   className="rounded-lg object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -410,6 +413,7 @@ export function MyExchangeClient() {
                                   alt={proposal.providedAgent.name}
                                   fill
                                   className="rounded-lg object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -476,6 +480,7 @@ export function MyExchangeClient() {
                                     alt={exchange.providedAgent.name}
                                     fill
                                     className="rounded-lg object-cover"
+                                    unoptimized
                                   />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -498,6 +503,7 @@ export function MyExchangeClient() {
                                     alt={exchange.wantedAgent.name}
                                     fill
                                     className="rounded-lg object-cover"
+                                    unoptimized
                                   />
                                 </div>
                                 <div className="flex-1 min-w-0">

@@ -234,6 +234,7 @@ export function PublishExchangeClient({ agents, series }: PublishExchangeClientP
                         alt={codeInfo.agent.name}
                         fill
                         className="rounded-lg object-cover"
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -310,6 +311,7 @@ export function PublishExchangeClient({ agents, series }: PublishExchangeClientP
                             alt={agent.name}
                             fill
                             className="rounded-lg object-cover"
+                            unoptimized
                           />
                         </div>
                         <div className="flex-1 min-w-0 text-left">
