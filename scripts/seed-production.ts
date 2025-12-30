@@ -34,11 +34,24 @@ async function main() {
 
   console.log('👤 创建用户...')
 
+  // 🔥 检查UID是否被占用，避免唯一性约束冲突
+  const maxUidRecord = await prisma.user.findFirst({
+    orderBy: {
+      uid: 'desc',
+    },
+    select: {
+      uid: true,
+    },
+  })
+
+  const nextUid = maxUidRecord ? maxUidRecord.uid + 1 : 100001
+
+  // 使用nextUid作为admin的uid，确保不冲突
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@ponta-ponta.com' },
     update: {},
     create: {
-      uid: 100001,
+      uid: nextUid,
       email: 'admin@ponta-ponta.com',
       password: passwordHash,
       nickname: '管理员',
@@ -51,7 +64,7 @@ async function main() {
     where: { email: 'test@example.com' },
     update: {},
     create: {
-      uid: 100002,
+      uid: nextUid + 1,
       email: 'test@example.com',
       password: passwordHash,
       nickname: '测试用户',
