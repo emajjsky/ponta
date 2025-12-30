@@ -3,11 +3,13 @@ import type {
   ChatChunk,
   ChatOptions,
   OpenAIConfig,
+  ImageAttachment,
 } from '../ai-provider'
 
 /**
  * OpenAI Compatible Provider
- * 支持OpenAI、SiliconFlow、DeepSeek、Gemini等所有兼容OpenAI API的服务
+ * 支持OpenAI、GLM-4V、SiliconFlow、DeepSeek、Gemini等所有兼容OpenAI API的服务
+ * 支持多模态（图片输入）
  */
 export class OpenAIProvider implements AIProvider {
   private endpoint: string
@@ -17,7 +19,7 @@ export class OpenAIProvider implements AIProvider {
   private systemPrompt?: string
 
   constructor(config: OpenAIConfig, systemPrompt?: string) {
-    this.endpoint = config.endpoint
+    this.endpoint = config.endpoint || 'https://api.openai.com/v1/chat/completions'
     this.apiKey = config.apiKey
     this.model = config.model
     this.headers = config.headers || {}
@@ -32,13 +34,14 @@ export class OpenAIProvider implements AIProvider {
     message: string,
     conversationId?: string,
     history?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    images?: ImageAttachment[],
     options?: ChatOptions
   ): AsyncIterable<ChatChunk> {
     try {
-      // 构建消息数组
+      // 构建消息数组（支持多模态）
       const messages: Array<{
         role: 'system' | 'user' | 'assistant'
-        content: string
+        content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>
       }> = []
 
       // 添加系统提示词
@@ -56,11 +59,45 @@ export class OpenAIProvider implements AIProvider {
         messages.push(...recentHistory)
       }
 
-      // 添加当前用户消息
-      messages.push({
-        role: 'user',
-        content: message,
-      })
+      // 添加当前用户消息（支持图片）
+      if (images && images.length > 0) {
+        // 多模态消息：图片 + 文字
+        const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = []
+
+        // 添加图片
+        for (const image of images) {
+          // 移除Base64前缀（data:image/jpeg;base64,）
+          const base64Data = image.base64.includes(',')
+            ? image.base64.split(',')[1]
+            : image.base64
+
+          content.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Data}`,
+            },
+          })
+        }
+
+        // 添加文字（如果有）
+        if (message) {
+          content.push({
+            type: 'text',
+            text: message,
+          })
+        }
+
+        messages.push({
+          role: 'user',
+          content,
+        })
+      } else {
+        // 纯文字消息
+        messages.push({
+          role: 'user',
+          content: message,
+        })
+      }
 
       // 构建请求体
       const body = {

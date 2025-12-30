@@ -3,9 +3,19 @@
  * 支持多种AI服务提供商（Coze、OpenAI兼容接口等）
  */
 
+/**
+ * 图片附件接口
+ */
+export interface ImageAttachment {
+  id: string
+  base64: string
+  name: string
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  imageUrl?: string // 图片URL（用于多模态）
 }
 
 export interface ChatOptions {
@@ -30,12 +40,14 @@ export interface AIProvider {
    * @param message 当前用户消息
    * @param conversationId 对话ID（用于Coze等维护会话状态的API）
    * @param history 对话历史（用于OpenAI等不维护会话状态的API）
+   * @param images 图片附件数组（Base64格式，用于多模态）
    * @param options 额外选项
    */
   chat(
     message: string,
     conversationId?: string,
     history?: ChatMessage[],
+    images?: ImageAttachment[],
     options?: ChatOptions
   ): AsyncIterable<ChatChunk>
 
@@ -57,9 +69,9 @@ export interface CozeConfig {
  * OpenAI Provider 配置
  */
 export interface OpenAIConfig {
-  endpoint: string // 例如: https://api.siliconflow.cn/v1/chat/completions
+  endpoint?: string // API endpoint，可选
   apiKey: string
-  model: string // 例如: deepseek-chat
+  model: string // 例如: zai-org/GLM-4.6V
   headers?: Record<string, string> // 自定义headers
 }
 
@@ -94,7 +106,24 @@ export async function createProvider(
 
     case 'OPENAI':
       const { OpenAIProvider } = await import('./providers/openai')
-      return new OpenAIProvider(config as OpenAIConfig, agent.systemPrompt)
+      const openaiConfig = config as OpenAIConfig
+
+      // 如果apiKey为空，使用环境变量中的默认值
+      if (!openaiConfig.apiKey || openaiConfig.apiKey.trim() === '') {
+        openaiConfig.apiKey = process.env.OPENAI_API_KEY || ''
+      }
+
+      // 如果model为空，使用环境变量中的默认值
+      if (!openaiConfig.model || openaiConfig.model.trim() === '') {
+        openaiConfig.model = process.env.OPENAI_MODEL || 'gpt-4-vision-preview'
+      }
+
+      // 如果endpoint为空，使用默认值
+      if (!openaiConfig.endpoint) {
+        openaiConfig.endpoint = process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1/chat/completions'
+      }
+
+      return new OpenAIProvider(openaiConfig, agent.systemPrompt)
 
     default:
       throw new Error(`Unknown provider: ${agent.provider}`)

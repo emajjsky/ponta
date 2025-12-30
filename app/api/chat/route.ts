@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // 获取请求体
     const body = await request.json()
-    const { agentSlug, message, conversationId: clientConversationId } = body
+    const { agentSlug, message, conversationId: clientConversationId, images } = body
 
     // 参数验证
     if (!agentSlug) {
@@ -51,8 +51,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    if (!message || typeof message !== 'string') {
-      return new Response(JSON.stringify({ error: '消息不能为空' }), {
+    // 允许纯图片消息（message可以为空）
+    if ((!message || typeof message !== 'string') && (!images || images.length === 0)) {
+      return new Response(JSON.stringify({ error: '消息或图片不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -97,8 +98,8 @@ export async function POST(request: NextRequest) {
       systemPrompt: agent.systemPrompt || undefined,
     })
 
-    // 调用AI API获取流式响应
-    const stream = provider.chat(message, conversationId || undefined, history)
+    // 调用AI API获取流式响应（支持图片）
+    const stream = provider.chat(message, conversationId || undefined, history, images)
 
     // 用于收集完整的 AI 回复（用于保存到数据库）
     let fullAiResponse = ''
