@@ -139,13 +139,20 @@ export async function POST(request: NextRequest) {
 
           // 流结束后保存聊天历史
           if (fullAiResponse) {
-            // 清理消息中的JSON元数据（Coze API的finish消息）
+            // 清理消息中的JSON元数据（Coze API的各类元数据）
             let cleanResponse = fullAiResponse
+              // 移除 generate_answer_finish 消息
               .replace(/\s*\{"msg_type":"generate_answer_finish","data":".*?","from_module":.*?\}/g, '')
               .replace(/\s*\{"msg_type":"generate_answer_finish","data":"\{.*?\}","from_module":.*?\}/g, '')
+              // 移除 time_capsule_recall 消息
+              .replace(/\s*\{"msg_type":"time_capsule_recall","data":".*?","from_module":.*?\}/g, '')
+              .replace(/\s*\{"msg_type":"time_capsule_recall","data":"\{.*?\}","from_module":.*?\}/g, '')
+              // 移除其他可能的JSON元数据（通用模式）
+              .replace(/\s*\{"msg_type":"[^"]*","data":".*?","from_module":"[^"]*"\}/g, '')
+              .replace(/\s*\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":"[^"]*"\}/g, '')
               .trim()
 
-            // 保存聊天历史
+            // 保存聊天历史（包含图片）
             if (cleanResponse) {
               await saveChatHistory(
                 userAgent.id,
@@ -153,7 +160,9 @@ export async function POST(request: NextRequest) {
                 agent.id,
                 message,
                 cleanResponse,
-                actualConversationId || ''
+                actualConversationId || '',
+                images, // 用户上传的图片
+                undefined // AI通常不返回图片，传undefined
               )
 
               // 更新用户对话统计（异步执行，不阻塞响应）

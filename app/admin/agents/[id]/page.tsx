@@ -71,25 +71,36 @@ export default function EditAgentPage() {
     isActive: true,
   })
 
-  // 加载系列列表
+  // 默认配置（从API加载）
+  const [defaultConfig, setDefaultConfig] = useState<any>(null)
+
+  // 加载系列列表和默认配置
   useEffect(() => {
-    const loadSeries = async () => {
+    const loadData = async () => {
       try {
         setLoadingSeries(true)
+
+        // 加载系列列表
         const res = await fetch('/api/admin/series?includeInactive=true')
         const data = await res.json()
-
         if (data.success) {
           setSeriesList(data.series)
         }
+
+        // 加载默认配置
+        const configRes = await fetch('/api/admin/default-config')
+        const configData = await configRes.json()
+        if (configData.success) {
+          setDefaultConfig(configData.config)
+        }
       } catch (error) {
-        console.error('加载系列列表失败:', error)
+        console.error('加载数据失败:', error)
       } finally {
         setLoadingSeries(false)
       }
     }
 
-    loadSeries()
+    loadData()
   }, [])
 
   useEffect(() => {
@@ -146,6 +157,28 @@ export default function EditAgentPage() {
   // 处理系列选择
   const handleSeriesChange = (value: string) => {
     setFormData((prev) => ({ ...prev, seriesId: value }))
+  }
+
+  // 处理provider切换，自动填充默认值
+  const handleProviderChange = (value: 'COZE' | 'OPENAI') => {
+    setFormData((prev) => {
+      const newFormData = { ...prev, provider: value }
+
+      // 如果切换到OpenAI且有默认配置，自动填充（仅当字段为空时）
+      if (value === 'OPENAI' && defaultConfig?.openai) {
+        newFormData.endpoint = prev.endpoint || defaultConfig.openai.endpoint
+        newFormData.apiKey = prev.apiKey || defaultConfig.openai.apiKey
+        newFormData.model = prev.model || defaultConfig.openai.model
+      }
+
+      // 如果切换到Coze且有默认配置，自动填充（仅当字段为空时）
+      if (value === 'COZE' && defaultConfig?.coze) {
+        newFormData.botId = prev.botId || defaultConfig.coze.botId
+        newFormData.apiToken = prev.apiToken || defaultConfig.coze.apiToken
+      }
+
+      return newFormData
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -273,9 +306,7 @@ export default function EditAgentPage() {
                 </label>
                 <Select
                   value={formData.provider}
-                  onValueChange={(value: 'COZE' | 'OPENAI') =>
-                    setFormData((prev) => ({ ...prev, provider: value }))
-                  }
+                  onValueChange={handleProviderChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择AI提供商" />

@@ -41,12 +41,17 @@ export class CozeProvider implements AIProvider {
       // 构建消息（支持图片）
       const additionalMessages: any[] = []
 
-      // 如果有图片，先添加图片
+      // 如果有图片，先添加图片（移除base64前缀）
       if (images && images.length > 0) {
         for (const image of images) {
+          // 移除 data:image/xxx;base64, 前缀，只保留纯base64数据
+          const base64Data = image.base64.includes(',')
+            ? image.base64.split(',')[1]
+            : image.base64
+
           additionalMessages.push({
             role: RoleType.User,
-            content: image.base64, // Coze支持直接传base64
+            content: base64Data,
             content_type: 'image',
           })
         }
@@ -59,6 +64,11 @@ export class CozeProvider implements AIProvider {
           content: message,
           content_type: 'text',
         })
+      }
+
+      // 如果没有图片也没有文字，返回空
+      if (additionalMessages.length === 0) {
+        throw new Error('消息和图片不能都为空')
       }
 
       const stream = await this.client.chat.stream({

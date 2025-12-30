@@ -62,6 +62,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
             role: msg.role,
             content: msg.content,
             timestamp: msg.timestamp,
+            images: msg.images, // 添加图片字段
             agentAvatar,
             agentName,
           }))

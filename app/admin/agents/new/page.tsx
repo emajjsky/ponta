@@ -51,25 +51,36 @@ export default function NewAgentPage() {
     isActive: true,
   })
 
-  // 加载系列列表
+  // 默认配置（从API加载）
+  const [defaultConfig, setDefaultConfig] = useState<any>(null)
+
+  // 加载系列列表和默认配置
   useEffect(() => {
-    const loadSeries = async () => {
+    const loadData = async () => {
       try {
         setLoadingSeries(true)
-        const res = await fetch('/api/admin/series?includeInactive=true')
-        const data = await res.json()
 
-        if (data.success) {
-          setSeriesList(data.series)
+        // 加载系列列表
+        const seriesRes = await fetch('/api/admin/series?includeInactive=true')
+        const seriesData = await seriesRes.json()
+        if (seriesData.success) {
+          setSeriesList(seriesData.series)
+        }
+
+        // 加载默认配置
+        const configRes = await fetch('/api/admin/default-config')
+        const configData = await configRes.json()
+        if (configData.success) {
+          setDefaultConfig(configData.config)
         }
       } catch (error) {
-        console.error('加载系列列表失败:', error)
+        console.error('加载数据失败:', error)
       } finally {
         setLoadingSeries(false)
       }
     }
 
-    loadSeries()
+    loadData()
   }, [])
 
   const handleChange = (
@@ -92,6 +103,28 @@ export default function NewAgentPage() {
       name,
       slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     }))
+  }
+
+  // 处理provider切换，自动填充默认值
+  const handleProviderChange = (value: 'COZE' | 'OPENAI') => {
+    setFormData((prev) => {
+      const newFormData = { ...prev, provider: value }
+
+      // 如果切换到OpenAI且有默认配置，自动填充
+      if (value === 'OPENAI' && defaultConfig?.openai) {
+        newFormData.endpoint = prev.endpoint || defaultConfig.openai.endpoint
+        newFormData.apiKey = prev.apiKey || defaultConfig.openai.apiKey
+        newFormData.model = prev.model || defaultConfig.openai.model
+      }
+
+      // 如果切换到Coze且有默认配置，自动填充
+      if (value === 'COZE' && defaultConfig?.coze) {
+        newFormData.botId = prev.botId || defaultConfig.coze.botId
+        newFormData.apiToken = prev.apiToken || defaultConfig.coze.apiToken
+      }
+
+      return newFormData
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -206,9 +239,7 @@ export default function NewAgentPage() {
                 </label>
                 <Select
                   value={formData.provider}
-                  onValueChange={(value: 'COZE' | 'OPENAI') =>
-                    setFormData((prev) => ({ ...prev, provider: value }))
-                  }
+                  onValueChange={handleProviderChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择AI提供商" />
