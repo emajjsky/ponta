@@ -52,8 +52,8 @@ export function getExpToNextLevel(currentLevel: number): number {
     return 0 // 已经是最高等级
   }
 
-  const nextLevelConfig = LEVEL_CONFIG[nextLevel]
-  const currentLevelConfig = LEVEL_CONFIG[currentLevel] || LEVEL_CONFIG[1]
+  const nextLevelConfig = LEVEL_CONFIG[nextLevel as keyof typeof LEVEL_CONFIG]
+  const currentLevelConfig = LEVEL_CONFIG[currentLevel as keyof typeof LEVEL_CONFIG] || LEVEL_CONFIG[1]
 
   return nextLevelConfig.requiredExp - currentLevelConfig.requiredExp
 }
@@ -78,7 +78,7 @@ export function getLevelConfig(level: number) {
     }
   }
 
-  return LEVEL_CONFIG[configLevel]
+  return LEVEL_CONFIG[configLevel as keyof typeof LEVEL_CONFIG]
 }
 
 /**
@@ -177,9 +177,9 @@ export function getLevelProgress(experience: number): number {
 
   for (let i = 0; i < levels.length; i++) {
     if (currentLevel === levels[i]) {
-      currentLevelConfig = LEVEL_CONFIG[levels[i]]
+      currentLevelConfig = LEVEL_CONFIG[levels[i] as keyof typeof LEVEL_CONFIG]
       if (i + 1 < levels.length) {
-        nextLevelConfig = LEVEL_CONFIG[levels[i + 1]]
+        nextLevelConfig = LEVEL_CONFIG[levels[i + 1] as keyof typeof LEVEL_CONFIG]
       }
       break
     }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
 import prisma from '@/lib/prisma'
-import { addExperience, EXP_REWARDS, calculateLevel } from '@/lib/user-level'
 
 /**
  * GET /api/user/profile
@@ -30,11 +29,8 @@ export async function GET(request: NextRequest) {
         avatar: true,
         bio: true,
         role: true,
-        level: true,
-        experience: true,
         totalAgents: true,
         totalChats: true,
-        totalAchievements: true,
         createdAt: true,
       },
     })
@@ -43,20 +39,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    // 计算等级进度
-    const currentLevel = calculateLevel(user.experience)
-    const expToNext = currentLevel < 100
-      ? (Object.values(require('@/lib/user-level').LEVEL_CONFIG)
-          .find((config: any) => config.requiredExp > user.experience) || { requiredExp: user.experience })
-          .requiredExp - user.experience
-      : 0
-
     return NextResponse.json({
       success: true,
       user: {
         ...user,
-        level: currentLevel, // 使用计算的等级
-        expToNext,
+        // TODO: 添加experience和level字段后，再计算等级进度
+        level: 1,
+        experience: 0,
       },
     })
   } catch (error: any) {
@@ -114,17 +103,19 @@ export async function PUT(request: NextRequest) {
         nickname: true,
         avatar: true,
         bio: true,
-        level: true,
-        experience: true,
         totalAgents: true,
         totalChats: true,
-        totalAchievements: true,
       },
     })
 
     return NextResponse.json({
       success: true,
-      user: updatedUser,
+      user: {
+        ...updatedUser,
+        // TODO: 添加experience和level字段后，再返回真实值
+        level: 1,
+        experience: 0,
+      },
       message: '资料更新成功',
     })
   } catch (error: any) {

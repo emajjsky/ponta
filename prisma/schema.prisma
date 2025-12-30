@@ -34,6 +34,8 @@ model User {
   userAgents      UserAgent[]
   activationCodes ActivationCode[]
   chatHistories   ChatHistory[]
+  exchanges       Exchange[]                      @relation("UserExchanges") // 发布的交换
+  proposals       ExchangeProposal[]              @relation("ExchangeProposals") // 发起的交换请求
 
   @@index([email])
   @@index([uid])
@@ -97,6 +99,7 @@ model Agent {
   userAgents      UserAgent[]
   activationCodes ActivationCode[]
   chatHistories   ChatHistory[]
+  wantedByExchanges Exchange[]     @relation("ExchangeWantedAgent") // 被想要的交换
 
   @@index([slug])
   @@index([seriesId])
@@ -145,10 +148,12 @@ model ActivationCode {
   updatedAt   DateTime  @updatedAt
 
   // 关联
-  agent     Agent      @relation(fields: [agentId], references: [id])
-  user      User?      @relation(fields: [userId], references: [id])
-  order     Order?     @relation
-  userAgent UserAgent?
+  agent          Agent              @relation(fields: [agentId], references: [id])
+  user           User?              @relation(fields: [userId], references: [id])
+  order          Order?             @relation
+  userAgent      UserAgent?
+  exchange       Exchange?          @relation("ExchangeActivationCode")
+  exchangeProposals ExchangeProposal[] @relation("ExchangeProposalCodes") // 交换请求中使用的激活码
 
   @@index([code])
   @@index([status])
@@ -197,4 +202,47 @@ model ChatHistory {
   @@index([agentId])
   @@index([conversationId])
   @@map("chat_histories")
+}
+
+// 交换发布表（用户发布的交换信息）
+model Exchange {
+  id               String    @id @default(cuid())
+  userId           String
+  activationCodeId String    @unique
+  wantedAgentId    String    // 用户想要的智能体
+  status           String    @default("PENDING") // PENDING | TRADING | COMPLETED | CANCELLED
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // 关联
+  user           User           @relation("UserExchanges", fields: [userId], references: [id])
+  activationCode ActivationCode @relation("ExchangeActivationCode", fields: [activationCodeId], references: [id])
+  wantedAgent    Agent          @relation("ExchangeWantedAgent", fields: [wantedAgentId], references: [id])
+  proposals      ExchangeProposal[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([wantedAgentId])
+  @@map("exchanges")
+}
+
+// 交换请求表（用户发起的交换请求）
+model ExchangeProposal {
+  id              String   @id @default(cuid())
+  exchangeId      String
+  proposerUserId  String   // 发起请求的用户
+  proposerCodeId  String   // 发起者提供的激活码
+  status          String   @default("PENDING") // PENDING | ACCEPTED | REJECTED | CANCELLED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // 关联
+  exchange       Exchange       @relation(fields: [exchangeId], references: [id])
+  proposer       User           @relation("ExchangeProposals", fields: [proposerUserId], references: [id])
+  proposerCode   ActivationCode @relation("ExchangeProposalCodes", fields: [proposerCodeId], references: [id])
+
+  @@index([exchangeId])
+  @@index([status])
+  @@index([proposerUserId])
+  @@map("exchange_proposals")
 }

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Gift, ShoppingBag, User, LogOut, Menu, X, Settings, Award } from 'lucide-react'
+import { Gift, ShoppingBag, User, LogOut, Menu, X, Settings, Award, ArrowLeftRight } from 'lucide-react'
 
 /**
  * 导航栏组件
@@ -36,6 +36,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: '首页', public: true },
     { href: '/shop', label: '商城', public: true },
+    { href: '/exchange/market', label: '交易中心', public: false },
     { href: '/profile', label: '个人中心', public: false },
     { href: '/my-agents', label: '我的智能体', public: false },
     { href: '/activate', label: '激活', public: false },
@@ -111,6 +112,24 @@ export function Navbar() {
                     <Link href="/profile" className="cursor-pointer">
                       <Award className="mr-2 h-4 w-4" />
                       个人中心
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/exchange/my" className="cursor-pointer">
+                      <ArrowLeftRight className="mr-2 h-4 w-4" />
+                      我的交易
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/exchange/market" className="cursor-pointer">
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      交易市场
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/exchange/publish" className="cursor-pointer">
+                      <Gift className="mr-2 h-4 w-4" />
+                      发布交换
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

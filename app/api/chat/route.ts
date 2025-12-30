@@ -127,17 +127,33 @@ export async function POST(request: NextRequest) {
 
             // 如果消息完成
             if (chunk.isComplete) {
-              // 保存聊天历史
-              if (fullAiResponse) {
-                await saveChatHistory(
-                  userAgent.id,
-                  payload.userId,
-                  agent.id,
-                  message,
-                  fullAiResponse,
-                  actualConversationId || ''
-                )
-              }
+              // 发送完成事件
+              const completeSseData = `data: ${JSON.stringify({
+                event: 'completed',
+                conversationId: actualConversationId,
+              })}\n\n`
+              controller.enqueue(encoder.encode(completeSseData))
+            }
+          }
+
+          // 流结束后保存聊天历史
+          if (fullAiResponse) {
+            // 清理消息中的JSON元数据（Coze API的finish消息）
+            let cleanResponse = fullAiResponse
+              .replace(/\s*\{"msg_type":"generate_answer_finish","data":".*?","from_module":.*?\}/g, '')
+              .replace(/\s*\{"msg_type":"generate_answer_finish","data":"\{.*?\}","from_module":.*?\}/g, '')
+              .trim()
+
+            // 保存聊天历史
+            if (cleanResponse) {
+              await saveChatHistory(
+                userAgent.id,
+                payload.userId,
+                agent.id,
+                message,
+                cleanResponse,
+                actualConversationId || ''
+              )
 
               // 更新用户对话统计（异步执行，不阻塞响应）
               ;(async () => {
@@ -161,13 +177,6 @@ export async function POST(request: NextRequest) {
                   console.error('更新用户统计数据错误:', error)
                 }
               })()
-
-              // 发送完成事件
-              const completeSseData = `data: ${JSON.stringify({
-                event: 'completed',
-                conversationId: actualConversationId,
-              })}\n\n`
-              controller.enqueue(encoder.encode(completeSseData))
             }
           }
 

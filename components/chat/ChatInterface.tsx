@@ -150,7 +150,10 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
                 if (data.event === 'delta') {
                   // 更新 AI 消息内容
-                  aiResponse += data.content
+                  // 实时过滤JSON元数据（Coze API的finish消息）
+                  const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
+                  aiResponse += cleanContent
+
                   setMessages((prev) => {
                     const newMessages = [...prev]
                     const lastMessage = newMessages[newMessages.length - 1]

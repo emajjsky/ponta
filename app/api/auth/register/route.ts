@@ -54,12 +54,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 生成UID：取当前最大UID + 1，如果没有用户则从100001开始
+    const maxUidUser = await prisma.user.findFirst({
+      orderBy: {
+        uid: 'desc',
+      },
+      select: {
+        uid: true,
+      },
+    })
+
+    const newUid = maxUidUser ? maxUidUser.uid + 1 : 100001
+
     // 密码加密
     const hashedPassword = await hashPassword(password)
 
     // 创建用户
     const user = await prisma.user.create({
       data: {
+        uid: newUid,
         email,
         password: hashedPassword,
         nickname,
@@ -68,6 +81,7 @@ export async function POST(request: NextRequest) {
       },
       select: {
         id: true,
+        uid: true,
         email: true,
         nickname: true,
         avatar: true,
