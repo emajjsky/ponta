@@ -43,6 +43,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { agentSlug, message, conversationId: clientConversationId, images } = body
 
+    // 调试日志
+    console.log('=== 收到聊天请求 ===')
+    console.log('agentSlug:', agentSlug)
+    console.log('message:', message)
+    console.log('images:', images ? `收到 ${images.length} 张图片` : '无图片')
+    if (images && images.length > 0) {
+      console.log('第一张图片ID:', images[0].id)
+      console.log('第一张图片base64长度:', images[0].base64.length)
+    }
+
     // 参数验证
     if (!agentSlug) {
       return new Response(JSON.stringify({ error: '智能体 slug 不能为空' }), {
