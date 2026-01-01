@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { NextRequest }
 import { requireAdmin } from '@/lib/admin'
 
 /**
@@ -7,7 +8,7 @@ import { requireAdmin } from '@/lib/admin'
  *
  * 需要认证：是（管理员）
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
     await requireAdmin(request)
