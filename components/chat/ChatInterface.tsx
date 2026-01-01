@@ -270,11 +270,6 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   // 实时过滤JSON元数据（Coze API的finish消息）
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
                   
-                  // 过滤纯空行的chunk，修复实时显示空行问题
-                  if (!cleanContent.trim()) {
-                    return
-                  }
-                  
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
                     // 跳过结尾重复内容
@@ -436,11 +431,6 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
                 if (data.event === 'delta') {
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
-                  
-                  // 过滤纯空行的chunk，修复实时显示空行问题
-                  if (!cleanContent.trim()) {
-                    return
-                  }
                   
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
