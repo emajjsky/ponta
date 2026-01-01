@@ -243,6 +243,17 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
       if (reader) {
         setIsStreaming(true)
 
+        // 创建临时AI消息（用于流式更新）
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: '',
+            agentAvatar,
+            agentName,
+          },
+        ])
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
@@ -260,9 +271,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   // 实时过滤JSON元数据（Coze API的finish消息）
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
                   
-                  // 去重：如果内容已经在aiResponse中完整存在，跳过（修复Coze API重复返回问题）
-                  if (cleanContent && aiResponse.includes(cleanContent)) {
-                    console.log('检测到重复内容，跳过:', cleanContent.slice(0, 50))
+                  // 去重：只检查结尾是否重复（避免阻止正常内容累加）
+                  if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
+                    console.log('检测到结尾重复，跳过:', cleanContent.slice(0, 50))
                   } else {
                     aiResponse += cleanContent
                   }
@@ -394,6 +405,17 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
       if (reader) {
         setIsStreaming(true)
 
+        // 创建临时AI消息（用于流式更新）
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: '',
+            agentAvatar,
+            agentName,
+          },
+        ])
+
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
@@ -409,9 +431,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                 if (data.event === 'delta') {
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
                   
-                  // 去重：如果内容已经在aiResponse中完整存在，跳过（修复Coze API重复返回问题）
-                  if (cleanContent && aiResponse.includes(cleanContent)) {
-                    console.log('检测到重复内容，跳过:', cleanContent.slice(0, 50))
+                  // 去重：只检查结尾是否重复（避免阻止正常内容累加）
+                  if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
+                    console.log('检测到结尾重复，跳过:', cleanContent.slice(0, 50))
                   } else {
                     aiResponse += cleanContent
                   }

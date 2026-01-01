@@ -117,7 +117,7 @@ export function ChatMessage({
         )}
 
         {/* 操作按钮（仅在AI消息且非流式时显示） */}
-        {!isUser && !isStreaming && (onRegenerate || onCopy) && (
+        {!isUser && !isStreaming && (
           <div className="flex gap-2 mt-2">
             {onRegenerate && (
               <Button
