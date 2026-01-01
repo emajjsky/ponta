@@ -58,15 +58,41 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
         const result = await response.json()
 
         if (result.success && result.history.length > 0) {
-          const historyMessages = result.history.map((msg: any) => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp,
-            images: msg.images, // 添加图片字段
-            agentAvatar,
-            agentName,
-          }))
+          const historyMessages = result.history.map((msg: any) => {
+            let content = msg.content
+            
+            // 去重：修复历史消息中Coze回复重复的问题
+            if (msg.role === 'assistant' && content) {
+              const halfLen = Math.floor(content.length / 2)
+              if (halfLen > 50) {  // 只处理足够长的消息
+                const firstHalf = content.slice(0, halfLen)
+                const secondHalf = content.slice(halfLen)
+                // 如果后半部分包含前半部分，说明是重复的
+                if (secondHalf.includes(firstHalf)) {
+                  // 找到重复的起始位置
+                  const repeatIndex = content.indexOf(firstHalf, 1)
+                  if (repeatIndex > 0) {
+                    content = content.slice(0, repeatIndex).trim()
+                  }
+                }
+              }
+            }
+            
+            return {
+              role: msg.role,
+              content,
+              timestamp: msg.timestamp,
+              images: msg.images,
+              agentAvatar,
+              agentName,
+            }
+          })
           setMessages(historyMessages)
+
+          // 历史消息加载完成后，滚动到最底部
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+          }, 100)
 
           // 获取最新的对话 ID
           const lastAssistantMessage = result.history
