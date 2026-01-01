@@ -161,6 +161,15 @@ export async function getChatHistory(
         createdAt: 'asc',
       },
       take: limit,
+      select: {
+        // 只选择必要的字段，优化传输性能
+        id: true,
+        role: true,
+        content: true,
+        images: true,
+        createdAt: true,
+        // 排除updatedAt等不需要的字段
+      },
     })
 
     return chatHistory.map((msg) => {

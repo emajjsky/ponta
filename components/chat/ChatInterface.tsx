@@ -89,9 +89,6 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           })
           setMessages(historyMessages)
 
-          // 历史消息加载完成后，立即滚动到最底部
-          messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
-
           // 获取最新的对话 ID
           const lastAssistantMessage = result.history
             .filter((msg: any) => msg.role === 'assistant')
@@ -111,10 +108,15 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   }, [user, agentSlug, agentAvatar, agentName])
 
   /**
-   * 自动滚动到底部
+   * 自动滚动到底部（messages变化或历史消息加载后）
    */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // 使用setTimeout确保DOM已更新，behavior:auto保证快速滚动
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+    }, 0)
+    
+    return () => clearTimeout(timer)
   }, [messages])
 
   /**
@@ -267,6 +269,11 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   // 更新 AI 消息内容
                   // 实时过滤JSON元数据（Coze API的finish消息）
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
+                  
+                  // 过滤纯空行的chunk，修复实时显示空行问题
+                  if (!cleanContent.trim()) {
+                    return
+                  }
                   
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
@@ -429,6 +436,11 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
                 if (data.event === 'delta') {
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
+                  
+                  // 过滤纯空行的chunk，修复实时显示空行问题
+                  if (!cleanContent.trim()) {
+                    return
+                  }
                   
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
