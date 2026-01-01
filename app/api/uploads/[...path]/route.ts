@@ -8,15 +8,20 @@ import { existsSync } from 'fs'
  * 提供uploads目录的静态文件服务
  *
  * 用于解决Nginx配置问题，确保上传的图片能正常访问
+ *
+ * Next.js 16: params是Promise，需要await
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
+    // Next.js 16: params需要await
+    const { path } = await params
+
     // 获取文件路径
-    const path = params.path.join('/')
-    const filepath = join(process.cwd(), 'public', 'uploads', path)
+    const filePath = path.join('/')
+    const filepath = join(process.cwd(), 'public', 'uploads', filePath)
 
     // 检查文件是否存在
     if (!existsSync(filepath)) {
@@ -30,7 +35,7 @@ export async function GET(
     const file = await readFile(filepath)
 
     // 根据文件扩展名设置Content-Type
-    const ext = path.split('.').pop()?.toLowerCase()
+    const ext = filePath.split('.').pop()?.toLowerCase()
     const contentTypeMap: Record<string, string> = {
       'jpg': 'image/jpeg',
       'jpeg': 'image/jpeg',
