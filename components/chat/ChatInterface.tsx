@@ -74,7 +74,6 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                 // 如果前后完全相同，说明是整句重复，只保留前半部分
                 if (firstHalf === secondHalf) {
                   content = firstHalf
-                  console.log('历史消息去重:', msg.content.slice(0, 30), '->', content.slice(0, 30))
                 }
               }
             }
@@ -90,10 +89,8 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           })
           setMessages(historyMessages)
 
-          // 历史消息加载完成后，滚动到最底部
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
-          }, 100)
+          // 历史消息加载完成后，立即滚动到最底部
+          messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
 
           // 获取最新的对话 ID
           const lastAssistantMessage = result.history
@@ -273,7 +270,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
-                    console.log('检测到结尾重复，跳过:', cleanContent.slice(0, 50))
+                    // 跳过结尾重复内容
                   } else {
                     aiResponse += cleanContent
                   }
@@ -291,12 +288,14 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   setIsStreaming(false)
                   setConversationId(data.conversationId)
 
-                  // 添加时间戳
+                  // 添加时间戳并清理空行
                   setMessages((prev) => {
                     const newMessages = [...prev]
                     const lastMessage = newMessages[newMessages.length - 1]
                     if (lastMessage && lastMessage.role === 'assistant') {
                       lastMessage.timestamp = Date.now()
+                      // 去除首尾空格，修复空行问题
+                      lastMessage.content = lastMessage.content.trim()
                     }
                     return newMessages
                   })
@@ -433,7 +432,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   
                   // 去重：只检查结尾是否重复（避免阻止正常内容累加）
                   if (cleanContent && aiResponse.endsWith(cleanContent) && cleanContent.length > 0) {
-                    console.log('检测到结尾重复，跳过:', cleanContent.slice(0, 50))
+                    // 跳过结尾重复内容
                   } else {
                     aiResponse += cleanContent
                   }

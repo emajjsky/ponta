@@ -130,21 +130,18 @@ export function ChatMessage({
                 重新生成
               </Button>
             )}
-            {onCopy && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(content)
-                  toast.success('已复制到剪贴板')
-                  onCopy?.()
-                }}
-                className="h-7 px-2 text-xs"
-              >
-                <Copy className="w-3 h-3 mr-1" />
-                复制
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(content)
+                toast.success('已复制到剪贴板')
+              }}
+              className="h-7 px-2 text-xs"
+            >
+              <Copy className="w-3 h-3 mr-1" />
+              复制
+            </Button>
           </div>
         )}
       </div>
