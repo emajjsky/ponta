@@ -187,7 +187,7 @@ psql -h localhost -U ponta_user -d ponta_prod -c "SELECT 1;"
 cd /opt
 
 # 克隆项目（使用你的GitHub仓库）
-git clone https://github.com/emajjsky/pontaponta.git
+git clone https://github.com/emajjsky/ponta.git
 
 # 进入项目目录
 cd pontaponta
@@ -1269,7 +1269,7 @@ sudo iotop
 
 ### 项目相关
 
-- GitHub仓库：https://github.com/emajjsky/pontaponta
+- GitHub仓库：https://github.com/emajjsky/ponta
 - 问题反馈：在GitHub提Issue
 
 ---
@@ -1314,7 +1314,7 @@ sudo systemctl restart postgresql
 
 # 克隆项目
 cd /opt
-git clone https://github.com/emajjsky/pontaponta.git
+git clone https://github.com/emajjsky/ponta.git
 cd pontaponta
 
 # 安装依赖
