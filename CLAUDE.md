@@ -134,14 +134,18 @@ User (用户)
   ├─→ Order[] (订单)
   ├─→ UserAgent[] (拥有的智能体)
   ├─→ ActivationCode[] (创建的激活码)
-  └─→ ChatHistory[] (对话历史)
+  ├─→ ChatHistory[] (对话历史)
+  ├─→ Exchange[] (发布的交换信息)
+  └─→ ExchangeProposal[] (发起的交换请求)
 
 Agent (智能体角色)
   ├─→ series (所属系列，可选)
   ├─→ Order[] (被购买的订单)
   ├─→ UserAgent[] (被激活的实例)
   ├─→ ActivationCode[] (关联的激活码)
-  └─→ ChatHistory[] (对话历史)
+  ├─→ ChatHistory[] (对话历史)
+  ├─→ Exchange[] (被想要的交换)
+  └─→ wantedByExchanges[] (被想要的交换)
 
 Order (订单)
   ├─→ user (购买用户)
@@ -153,13 +157,26 @@ ActivationCode (激活码)
   ├─→ agent (属于哪个智能体)
   ├─→ user (被哪个用户激活)
   ├─→ order (关联订单，可选)
-  └─→ userAgent (激活后创建的UserAgent实例)
+  ├─→ userAgent (激活后创建的UserAgent实例)
+  ├─→ exchange (发布的交换信息，一对一)
+  └─→ exchangeProposals[] (被用于的交换请求)
 
 UserAgent (用户拥有的智能体实例)
   ├─→ user (所属用户)
   ├─→ agent (对应的智能体角色)
   ├─→ activationCode (使用的激活码)
   └─→ ChatHistory[] (该实例的对话历史)
+
+Exchange (交换发布)
+  ├─→ user (发布用户)
+  ├─→ activationCode (提供的激活码，一对一)
+  ├─→ wantedAgent (想要的智能体)
+  └─→ proposals[] (收到的交换请求)
+
+ExchangeProposal (交换请求)
+  ├─→ exchange (关联的交换信息)
+  ├─→ proposer (发起用户)
+  └─→ proposerCode (发起者提供的激活码)
 ```
 
 **重要关系：**
@@ -168,6 +185,11 @@ UserAgent (用户拥有的智能体实例)
 - **用户激活码后**，会创建一个`UserAgent`记录（一个用户对同一个智能体只能有一个实例）
 - **UserAgent唯一性**：通过`userId + agentId`的唯一索引保证重复激活
 - **对话历史关联**：通过`userAgentId`关联到具体的智能体实例
+- **交换系统关系**：
+  - `Exchange.activationCodeId`是唯一索引，一个激活码只能发布一次
+  - `ExchangeProposal`关联到`Exchange`和发起者提供的`ActivationCode`
+  - 交换成功后，两个激活码的`userId`互换，并创建/更新对应的`UserAgent`记录
+  - 通过upsert确保用户对同一智能体只有一个UserAgent记录（即使重复获得也会更新）
 
 ## 关键业务逻辑
 
@@ -238,22 +260,120 @@ export async function GET(request: NextRequest) {
 
 ### AI对话流程
 
-**Coze API集成（lib/coze.ts）：**
+**双Provider架构（lib/ai-provider.ts）：**
 
-1. **流式响应处理**：使用Server-Sent Events (SSE)返回流式数据
-2. **对话历史管理**：每次对话前加载历史记录，AI回复后保存
-3. **错误处理**：API错误时返回友好提示，保存错误消息到历史
-4. **自动滚动**：前端通过自定义hook处理流式消息的UI更新
+项目支持两种AI Provider，通过统一的`AIProvider`接口实现：
+
+1. **CozeProvider（维护会话状态）**：
+   - 使用`botId`和`apiToken`连接Coze API
+   - 自动管理`conversationId`，无需手动传递历史
+   - 支持多模态图片输入（Base64格式）
+   - 核心函数：`chat(message, conversationId?, history?, images?)`
+
+2. **OpenAIProvider（手动传递历史）**：
+   - 支持OpenAI兼容接口（如DeepSeek、SiliconFlow等）
+   - 需要配置`endpoint`、`apiKey`、`model`、`systemPrompt`
+   - 手动传递历史消息（限制20条）
+   - 支持多模态图片输入（Base64格式）
+
+**流式响应处理（app/api/chat/route.ts）：**
+- 使用Server-Sent Events (SSE)返回流式数据
+- 对话历史通过`conversationId`关联（Coze自动维护）
+- 前端通过自定义hook处理流式消息的UI更新
+- 图片附件功能：支持上传Base64图片进行多模态对话
 
 **关键点：**
-- Coze API使用`botId`和`apiToken`连接
-- 对话历史通过`conversation_id`关联（可选功能）
-- 流式响应通过AsyncIterable迭代器处理
+- 图片上传：Coze需要先调用`/v1/files/upload`上传图片获取`file_id`
+- 历史管理：OpenAI Provider需要手动加载和传递历史记录
+- 错误处理：API错误时返回友好提示，保存错误消息到历史
 - 核心函数：
-  - `chatWithAgent(botId, message, conversationId?, userId?)` - 发送消息获取流式响应
+  - `createProvider(agent)` - 根据Agent配置创建Provider实例
+  - `chat(message, conversationId?, history?, images?)` - 发送消息获取流式响应
   - `saveChatHistory()` - 保存对话历史到数据库
   - `getChatHistory()` - 获取历史记录
   - `getOrCreateConversationId()` - 获取或创建会话ID
+
+### 多模态图片识别功能
+
+**功能概述：**
+用户可以在对话中上传图片，AI智能体能够识别图片内容并进行分析。支持同时上传多张图片（最多3张），实现图文混合对话。
+
+**数据接口（ImageAttachment）：**
+```typescript
+interface ImageAttachment {
+  id: string        // 唯一标识（时间戳+随机数）
+  base64: string    // 图片Base64编码（含data:image前缀）
+  name: string      // 原始文件名
+}
+```
+
+**前端实现（components/chat/ChatInterface.tsx）：**
+1. **图片选择与验证：**
+   - 使用`<input type="file">`选择图片文件
+   - 文件类型验证：必须为`image/*`类型
+   - 文件大小限制：单张图片最大10MB
+   - 数量限制：一次对话最多上传3张图片
+
+2. **Base64转换：**
+   - 使用`FileReader.readAsDataURL()`转换为Base64
+   - 保存格式：`data:image/jpeg;base64,/9j/4AAQ...`
+
+3. **UI交互：**
+   - 输入框上方显示图片缩略图
+   - 支持点击X按钮删除已选图片
+   - 提交时图片随消息一起发送到后端
+
+**后端处理（双Provider差异）：**
+
+1. **CozeProvider（lib/providers/coze.ts）：**
+   - **先上传后发送**：调用`/v1/files/upload` API上传图片
+   - 使用`axios` + `form-data`构建multipart请求
+   - 获取返回的`file_id`（如：`7428933434510770211`）
+   - **多模态消息格式**：
+   ```json
+   {
+     "role": "user",
+     "content_type": "object_string",
+     "content": [
+       { "type": "image", "file_id": "xxx" },
+       { "type": "image", "file_id": "yyy" },
+       { "type": "text", "text": "用户描述" }
+     ]
+   }
+   ```
+
+2. **OpenAIProvider（lib/providers/openai.ts）：**
+   - **直接使用Base64**：无需预先上传图片
+   - **多模态消息格式**（OpenAI标准）：
+   ```json
+   {
+     "role": "user",
+     "content": [
+       {
+         "type": "image_url",
+         "image_url": { "url": "data:image/jpeg;base64,/9j/4AAQ..." }
+       },
+       { "type": "text", "text": "用户描述" }
+     ]
+   }
+   ```
+
+**数据存储：**
+- 图片数据保存在`ChatHistory`表的`images`字段（JSON字符串）
+- 查询时需要用`JSON.parse()`解析
+- 支持从历史记录中加载并显示图片
+
+**使用场景：**
+- 用户拍照上传让AI识别物体
+- 上传截图让AI分析问题
+- 上传图片让AI描述内容
+- 医疗影像识别、文档OCR等
+
+**注意事项：**
+⚠️ **Base64数据量大**：单张图片Base64后约为原大小的4/3，注意前端内存和后端请求体大小
+⚠️ **Coze API限制**：需要确保图片格式为JPEG/PNG，避免上传不支持格式
+⚠️ **历史消息体积**：图片数据会显著增加数据库存储，建议定期清理或实施归档策略
+⚠️ **纯图片消息**：允许message为空字符串，只发送图片（用户可以只发图不说话）
 
 ### 激活码系统
 
@@ -282,6 +402,48 @@ export async function GET(request: NextRequest) {
 3. 系统为该系列随机分配一个未使用的激活码
 4. 更新激活码状态，关联到订单
 5. 用户在"我的智能体"中使用激活码解锁智能体
+
+### 智能体交换系统
+
+**Exchange（交换）数据模型：**
+- 用户可以发布自己拥有的智能体的重复激活码到交易市场
+- 指定自己想要交换的智能体
+- 其他用户可以发起交换请求，提供发布者想要的智能体激活码
+- 发布者接受后，系统自动交换两个激活码的拥有者
+
+**交换流程：**
+
+1. **发布交换（POST /api/exchange/publish）：**
+   - 用户输入激活码和想要的智能体ID
+   - 验证激活码状态（必须是UNUSED）
+   - 验证用户是否已拥有该智能体（防止发布未激活的）
+   - 创建Exchange记录，状态为PENDING
+
+2. **浏览市场（GET /api/exchange/market）：**
+   - 查看所有PENDING状态的交换信息
+   - 不显示激活码code（隐藏敏感信息）
+   - 筛选条件：agentId、seriesId、status
+
+3. **发起交换请求（POST /api/exchange/propose）：**
+   - 选择一个交换信息，提供自己的激活码
+   - 验证激活码状态和智能体匹配度
+   - 创建ExchangeProposal记录，状态为PENDING
+
+4. **处理请求（PUT /api/exchange/handle）：**
+   - 发布者接受或拒绝交换请求
+   - 接受：在事务中交换两个激活码的拥有者，更新UserAgent记录
+   - 拒绝：仅更新proposal状态为REJECTED
+
+5. **直接交换（POST /api/exchange/direct-trade）：**
+   - 双方同意后，通过直接交换API完成交易
+   - 交换两个激活码的userId和状态
+
+**关键点：**
+- Exchange状态：PENDING（待交换）→ TRADING（交易中）→ COMPLETED（已完成）/ CANCELLED（已取消）
+- ExchangeProposal状态：PENDING（待处理）→ ACCEPTED（已接受）/ REJECTED（已拒绝）/ CANCELLED（已取消）
+- 防止重复发布：同一个激活码不能同时在多个交换中
+- UserAgent唯一性：通过upsert确保用户对同一智能体只有一个记录
+- 统计数据：交换成功后更新双方的totalAgents计数
 
 ## 重要配置文件
 
