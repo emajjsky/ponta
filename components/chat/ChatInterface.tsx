@@ -399,8 +399,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           if (done) break
 
           const chunk = decoder.decode(value)
-          const lines = chunk.split('
-')
+          const lines = chunk.split('\n')
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
