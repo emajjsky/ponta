@@ -23,6 +23,8 @@ export interface ChatMessageProps {
   isStreaming?: boolean // 是否正在流式输出
   agentAvatar?: string // AI 头像
   agentName?: string // AI 名称
+  onRegenerate?: () => void // 重新生成回调
+  onCopy?: () => void // 复制回调
 }
 
 /**
@@ -37,6 +39,8 @@ export function ChatMessage({
   isStreaming = false,
   agentAvatar,
   agentName = 'AI',
+  onRegenerate,
+  onCopy,
 }: ChatMessageProps) {
   const isUser = role === 'user'
 
@@ -108,6 +112,38 @@ export function ChatMessage({
           <span className="text-xs text-muted-foreground mt-1 px-1">
             {format(new Date(timestamp), 'HH:mm', { locale: zhCN })}
           </span>
+        )}
+
+        {/* 操作按钮（仅在AI消息且非流式时显示） */}
+        {!isUser && !isStreaming && (onRegenerate || onCopy) && (
+          <div className="flex gap-2 mt-2">
+            {onRegenerate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRegenerate}
+                className="h-7 px-2 text-xs"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                重新生成
+              </Button>
+            )}
+            {onCopy && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(content)
+                  toast.success('已复制到剪贴板')
+                  onCopy?.()
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                <Copy className="w-3 h-3 mr-1" />
+                复制
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -38,6 +38,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true)  // 历史消息加载状态
 
   // 图片相关状态
   const [images, setImages] = useState<ImageAttachment[]>([])
@@ -53,6 +54,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
     if (!user) return
 
     const loadHistory = async () => {
+      setIsHistoryLoading(true)  // 开始加载
       try {
         const response = await fetch(`/api/chat/history?agentSlug=${agentSlug}&limit=50`)
         const result = await response.json()
@@ -61,19 +63,18 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           const historyMessages = result.history.map((msg: any) => {
             let content = msg.content
             
-            // 去重：修复历史消息中Coze回复重复的问题
-            if (msg.role === 'assistant' && content) {
-              const halfLen = Math.floor(content.length / 2)
-              if (halfLen > 50) {  // 只处理足够长的消息
+            // 去重：修复历史消息中Coze回复完全重复的问题
+            if (msg.role === 'assistant' && content && content.length > 20) {
+              const len = content.length
+              // 如果长度是偶数，检查是否是完全重复
+              if (len % 2 === 0) {
+                const halfLen = len / 2
                 const firstHalf = content.slice(0, halfLen)
                 const secondHalf = content.slice(halfLen)
-                // 如果后半部分包含前半部分，说明是重复的
-                if (secondHalf.includes(firstHalf)) {
-                  // 找到重复的起始位置
-                  const repeatIndex = content.indexOf(firstHalf, 1)
-                  if (repeatIndex > 0) {
-                    content = content.slice(0, repeatIndex).trim()
-                  }
+                // 如果前后完全相同，说明是整句重复，只保留前半部分
+                if (firstHalf === secondHalf) {
+                  content = firstHalf
+                  console.log('历史消息去重:', msg.content.slice(0, 30), '->', content.slice(0, 30))
                 }
               }
             }
@@ -104,6 +105,8 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
         }
       } catch (error) {
         console.error('加载历史消息失败:', error)
+      } finally {
+        setIsHistoryLoading(false)  // 加载完成
       }
     }
 
@@ -339,11 +342,141 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
     }
   }
 
+  /**
+   * 重新生成最后一条AI消息
+   */
+  const handleRegenerate = async () => {
+    if (isLoading || messages.length < 2) return
+
+    // 找到最后一条用户消息
+    const lastUserMessageIndex = messages.map((m, i) => ({ ...m, originalIndex: i }))
+      .filter(m => m.role === 'user')
+      .pop()?.originalIndex
+
+    if (lastUserMessageIndex === undefined) return
+
+    const userMessage = messages[lastUserMessageIndex]
+    if (!userMessage) return
+
+    // 删除最后一条AI消息
+    setMessages((prev) => prev.slice(0, -1))
+
+    // 重新发送用户消息
+    setIsLoading(true)
+    setIsStreaming(false)
+
+    try {
+      abortControllerRef.current = new AbortController()
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          agentSlug,
+          message: userMessage.content,
+          conversationId: conversationId || undefined,
+          images: userMessage.images,
+        }),
+        signal: abortControllerRef.current.signal,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || '发送消息失败')
+      }
+
+      // 处理流式响应
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let aiResponse = ''
+
+      if (reader) {
+        setIsStreaming(true)
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('
+')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+
+                if (data.event === 'delta') {
+                  const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
+                  
+                  // 去重：如果内容已经在aiResponse中完整存在，跳过（修复Coze API重复返回问题）
+                  if (cleanContent && aiResponse.includes(cleanContent)) {
+                    console.log('检测到重复内容，跳过:', cleanContent.slice(0, 50))
+                  } else {
+                    aiResponse += cleanContent
+                  }
+
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMessage = newMessages[newMessages.length - 1]
+                    if (lastMessage && lastMessage.role === 'assistant') {
+                      lastMessage.content = aiResponse
+                    }
+                    return newMessages
+                  })
+                } else if (data.event === 'completed') {
+                  setIsStreaming(false)
+                  setConversationId(data.conversationId)
+
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMessage = newMessages[newMessages.length - 1]
+                    if (lastMessage && lastMessage.role === 'assistant') {
+                      lastMessage.timestamp = Date.now()
+                    }
+                    return newMessages
+                  })
+                } else if (data.event === 'error') {
+                  toast.error(data.error || '对话发生错误')
+                  setIsStreaming(false)
+                }
+              } catch (parseError) {
+                console.error('解析 SSE 数据错误:', parseError)
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        toast.info('已取消发送')
+      } else {
+        console.error('重新生成错误:', error)
+        toast.error(error.message || '重新生成失败，请稍后重试')
+        setMessages((prev) => prev.slice(0, -1))
+      }
+    } finally {
+      setIsLoading(false)
+      setIsStreaming(false)
+      abortControllerRef.current = null
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {messages.length === 0 && (
+        {isHistoryLoading ? (
+          // 加载历史消息中的状态
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">正在加载对话记录...</p>
+            </div>
+          </div>
+        ) : messages.length === 0 && (
+          // 没有消息时的空状态
           <div className="flex items-center justify-center h-full text-center">
             <div className="space-y-3">
               <div className="text-4xl">💬</div>
@@ -362,6 +495,14 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
             key={`${message.role}-${index}-${message.timestamp || 'streaming'}`}
             {...message}
             isStreaming={message.role === 'assistant' && index === messages.length - 1 && isStreaming}
+            onRegenerate={
+              message.role === 'assistant' && 
+              index === messages.length - 1 && 
+              !isStreaming && 
+              !isLoading
+                ? handleRegenerate
+                : undefined
+            }
           />
         ))}
 
