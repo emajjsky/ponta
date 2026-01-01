@@ -216,6 +216,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           message: userMessage,
           conversationId: conversationId || undefined,
           images: currentImages, // 发送图片数据
+          isRegenerate: false,  // 标记为新对话
         }),
         signal: abortControllerRef.current.signal,
       })
@@ -387,6 +388,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           message: userMessage.content,
           conversationId: conversationId || undefined,
           images: userMessage.images,
+          isRegenerate: true,  // 标记为重新生成
         }),
         signal: abortControllerRef.current.signal,
       })

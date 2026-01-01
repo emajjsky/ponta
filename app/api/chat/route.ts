@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // 获取请求体
     const body = await request.json()
-    const { agentSlug, message, conversationId: clientConversationId, images } = body
+    const { agentSlug, message, conversationId: clientConversationId, images, isRegenerate } = body
 
     // 调试日志
     console.log('=== 收到聊天请求 ===')
@@ -164,6 +164,26 @@ export async function POST(request: NextRequest) {
 
             // 保存聊天历史（包含图片）
             if (cleanResponse) {
+              // 如果是重新生成，先删除最后一条AI消息（避免重复）
+              if (isRegenerate) {
+                const lastAiMessage = await prisma.chatHistory.findFirst({
+                  where: {
+                    userAgentId: userAgent.id,
+                    role: 'assistant',
+                  },
+                  orderBy: {
+                    createdAt: 'desc',
+                  },
+                })
+                
+                if (lastAiMessage) {
+                  await prisma.chatHistory.delete({
+                    where: { id: lastAiMessage.id },
+                  })
+                  console.log('重新生成：已删除旧AI消息')
+                }
+              }
+              
               await saveChatHistory(
                 userAgent.id,
                 payload.userId,

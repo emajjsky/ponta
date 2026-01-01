@@ -133,9 +133,14 @@ export function ChatMessage({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(content)
-                toast.success('已复制到剪贴板')
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(content)
+                  toast.success('已复制到剪贴板')
+                } catch (error) {
+                  console.error('复制失败:', error)
+                  toast.error('复制失败，请重试')
+                }
               }}
               className="h-7 px-2 text-xs"
             >
