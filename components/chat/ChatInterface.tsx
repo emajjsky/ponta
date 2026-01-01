@@ -200,15 +200,6 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
     }
     setMessages((prev) => [...prev, userMessageObj])
 
-    // 创建临时 AI 消息（用于流式更新）
-    const aiMessageObj: ChatMessageProps = {
-      role: 'assistant',
-      content: '',
-      agentAvatar,
-      agentName,
-    }
-    setMessages((prev) => [...prev, aiMessageObj])
-
     try {
       // 创建新的 AbortController
       abortControllerRef.current = new AbortController()
@@ -370,8 +361,15 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
     const userMessage = messages[lastUserMessageIndex]
     if (!userMessage) return
 
-    // 删除最后一条AI消息
-    setMessages((prev) => prev.slice(0, -1))
+    // 不删除消息，而是重置最后一条AI消息的内容（用于重新生成）
+    setMessages((prev) => {
+      const newMessages = [...prev]
+      const lastMessage = newMessages[newMessages.length - 1]
+      if (lastMessage && lastMessage.role === 'assistant') {
+        lastMessage.content = ''  // 清空内容，准备重新生成
+      }
+      return newMessages
+    })
 
     // 重新发送用户消息
     setIsLoading(true)
