@@ -230,7 +230,13 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                   // 更新 AI 消息内容
                   // 实时过滤JSON元数据（Coze API的finish消息）
                   const cleanContent = data.content.replace(/\{"msg_type":"[^"]*","data":"[^"]*","from_module":[^}]*\}/g, '').replace(/\{"msg_type":"[^"]*","data":"\{[^}]*\}","from_module":[^}]*\}/g, '')
-                  aiResponse += cleanContent
+                  
+                  // 去重：如果内容已经在aiResponse中完整存在，跳过（修复Coze API重复返回问题）
+                  if (cleanContent && aiResponse.includes(cleanContent)) {
+                    console.log('检测到重复内容，跳过:', cleanContent.slice(0, 50))
+                  } else {
+                    aiResponse += cleanContent
+                  }
 
                   setMessages((prev) => {
                     const newMessages = [...prev]

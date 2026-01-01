@@ -71,9 +71,9 @@ export async function POST(request: NextRequest) {
     const filepath = join(uploadDir, filename)
     await writeFile(filepath, buffer)
 
-    // 返回图片URL（始终返回相对路径）
-    const url = `/uploads/${filename}`
-
+    // 返回图片完整URL（从环境变量获取域名）
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const url = `${baseUrl}/uploads/${filename}`
     return NextResponse.json(
       {
         success: true,

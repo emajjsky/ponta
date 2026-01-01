@@ -153,7 +153,7 @@ export class OpenAIProvider implements AIProvider {
 
           try {
             const json = JSON.parse(data)
-            const content = json.choices?.[0]?.delta?.content || ''
+            const content = (json.choices?.[0]?.delta?.content || '').trim() // 修复：去除首尾空格，解决回复开头换行问题
             const isComplete = json.choices?.[0]?.finish_reason === 'stop'
 
             yield {
