@@ -118,21 +118,21 @@ export function ChatMessage({
 
         {/* 操作按钮（仅在AI消息且非流式时显示） */}
         {!isUser && !isStreaming && (
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-1 mt-2">
             {onRegenerate && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={onRegenerate}
-                className="h-7 px-2 text-xs"
+                className="h-7 w-7"
+                title="重新生成"
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                重新生成
+                <RotateCcw className="w-3 h-3" />
               </Button>
             )}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(content)
@@ -142,10 +142,10 @@ export function ChatMessage({
                   toast.error('复制失败，请重试')
                 }
               }}
-              className="h-7 px-2 text-xs"
+              className="h-7 w-7"
+              title="复制"
             >
-              <Copy className="w-3 h-3 mr-1" />
-              复制
+              <Copy className="w-3 h-3" />
             </Button>
           </div>
         )}

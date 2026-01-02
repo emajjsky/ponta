@@ -105,11 +105,14 @@ export async function saveChatHistory(
   aiMessage: string,
   conversationId: string,
   userImages?: ImageAttachment[],
-  aiImages?: ImageAttachment[]
+  aiImages?: ImageAttachment[],
+  saveUserMessage: boolean = true
 ): Promise<void> {
   try {
     // 保存用户消息（如果有图片，序列化为JSON存储）
-    await prisma.chatHistory.create({
+    // 只有当saveUserMessage为true时才保存（避免重新生成时重复保存用户消息）
+    if (saveUserMessage) {
+      await prisma.chatHistory.create({
       data: {
         userId,
         agentId,
@@ -119,7 +122,8 @@ export async function saveChatHistory(
         conversationId,
         images: userImages && userImages.length > 0 ? JSON.stringify(userImages) : null,
       },
-    })
+      })
+    }
 
     // 保存 AI 回复（通常没有图片，但保持接口一致性）
     await prisma.chatHistory.create({

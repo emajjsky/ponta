@@ -192,7 +192,8 @@ export async function POST(request: NextRequest) {
                 cleanResponse,
                 actualConversationId || '',
                 images, // 用户上传的图片
-                undefined // AI通常不返回图片，传undefined
+                undefined, // AI通常不返回图片，传undefined
+                !isRegenerate // 重新生成时不保存用户消息，避免重复
               )
 
               // 更新用户对话统计（异步执行，不阻塞响应）
