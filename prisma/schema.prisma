@@ -18,6 +18,11 @@ model User {
   password        String
   nickname        String
   avatar          String?
+  phone           String?  @unique
+  phoneVerified   Boolean  @default(false)
+  province        String?
+  city            String?
+  district        String?
   bio             String?  // 个人简介
   role            String   @default("USER") // USER | ADMIN
   status          String   @default("ACTIVE") // ACTIVE | BANNED
@@ -36,6 +41,7 @@ model User {
   chatHistories   ChatHistory[]
   exchanges       Exchange[]                      @relation("UserExchanges") // 发布的交换
   proposals       ExchangeProposal[]              @relation("ExchangeProposals") // 发起的交换请求
+  addresses       Address[]
 
   @@index([email])
   @@index([uid])
@@ -246,4 +252,25 @@ model ExchangeProposal {
   @@index([status])
   @@index([proposerUserId])
   @@map("exchange_proposals")
+}
+
+// 收货地址表
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String   // 收货人姓名
+  phone       String   // 收货人手机号
+  province    String   // 省
+  city        String   // 市
+  district    String   // 区
+  detail      String   // 详细地址
+  isDefault   Boolean  @default(false) // 是否默认地址
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("addresses")
 }

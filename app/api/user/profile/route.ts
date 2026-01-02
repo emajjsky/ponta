@@ -28,6 +28,9 @@ export async function GET(request: NextRequest) {
         nickname: true,
         avatar: true,
         bio: true,
+        province: true,
+        city: true,
+        district: true,
         role: true,
         totalAgents: true,
         totalChats: true,
@@ -59,7 +62,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * PUT /api/user/profile
- * 更新用户资料（昵称、头像、简介）
+ * 更新用户资料（昵称、头像、简介、省市区）
  */
 export async function PUT(request: NextRequest) {
   try {
@@ -75,7 +78,7 @@ export async function PUT(request: NextRequest) {
 
     // 解析请求体
     const body = await request.json()
-    const { nickname, avatar, bio } = body
+    const { nickname, avatar, bio, province, city, district } = body
 
     // 验证数据
     if (nickname && (nickname.length < 2 || nickname.length > 20)) {
@@ -91,6 +94,9 @@ export async function PUT(request: NextRequest) {
     if (nickname !== undefined) updateData.nickname = nickname
     if (avatar !== undefined) updateData.avatar = avatar
     if (bio !== undefined) updateData.bio = bio
+    if (province !== undefined) updateData.province = province
+    if (city !== undefined) updateData.city = city
+    if (district !== undefined) updateData.district = district
 
     // 更新用户资料
     const updatedUser = await prisma.user.update({
@@ -103,6 +109,9 @@ export async function PUT(request: NextRequest) {
         nickname: true,
         avatar: true,
         bio: true,
+        province: true,
+        city: true,
+        district: true,
         totalAgents: true,
         totalChats: true,
       },
