@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card'
 import { Send, Loader2, Image as ImageIcon, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { VoiceRecorder } from './VoiceRecorder'
+import { VoicePlayer } from './VoicePlayer'
 
 /**
  * 图片接口
@@ -43,6 +45,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   // 图片相关状态
   const [images, setImages] = useState<ImageAttachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 语音相关状态
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -512,21 +517,37 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           </div>
         )}
 
-        {messages.map((message, index) => (
-          <ChatMessage
-            key={`${message.role}-${index}-${message.timestamp || 'streaming'}`}
-            {...message}
-            isStreaming={message.role === 'assistant' && index === messages.length - 1 && isStreaming}
-            onRegenerate={
-              message.role === 'assistant' && 
-              index === messages.length - 1 && 
-              !isStreaming && 
-              !isLoading
-                ? handleRegenerate
-                : undefined
-            }
-          />
-        ))}
+        {messages.map((message, index) => {
+          const messageId = `${message.role}-${index}-${message.timestamp || 'streaming'}`
+          const isLastAssistantMessage = message.role === 'assistant' && index === messages.length - 1
+
+          return (
+            <div key={messageId} className="space-y-2">
+              <ChatMessage
+                {...message}
+                isStreaming={isLastAssistantMessage && isStreaming}
+                onRegenerate={
+                  isLastAssistantMessage &&
+                  !isStreaming &&
+                  !isLoading
+                    ? handleRegenerate
+                    : undefined
+                }
+              />
+
+              {/* AI消息的语音播放按钮 */}
+              {message.role === 'assistant' && message.content && (
+                <div className="ml-12 max-w-2xl">
+                  <VoicePlayer
+                    text={message.content}
+                    autoPlay={false}
+                    onPlayEnd={() => setPlayingMessageId(null)}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {isLoading && !isStreaming && (
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -562,7 +583,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
         )}
 
         {/* 输入框 + 按钮 */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {/* 图片上传按钮 */}
           <input
             ref={fileInputRef}
@@ -581,6 +602,16 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
           >
             <ImageIcon className="w-4 h-4" />
           </Button>
+
+          {/* 语音录音按钮 */}
+          <VoiceRecorder
+            onTextRecognized={(text) => {
+              setInputValue(text)
+              // 可选：自动发送
+              // setTimeout(() => handleSendMessage(), 500)
+            }}
+            maxDuration={60}
+          />
 
           <Input
             value={inputValue}
@@ -610,7 +641,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
         </div>
 
         <p className="text-xs text-muted-foreground mt-2">
-          按 Enter 发送，Shift + Enter 换行 • 支持上传图片进行分析
+          按 Enter 发送，Shift + Enter 换行 • 支持上传图片和语音输入
         </p>
       </div>
     </div>
