@@ -19,7 +19,7 @@ model User {
   nickname        String
   avatar          String?
   phone           String?  @unique
-  phoneVerified   Boolean  @default(false)
+  phoneVerified   Boolean  @default(false) @map("phone_verified")
   province        String?
   city            String?
   district        String?
