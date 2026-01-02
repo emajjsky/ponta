@@ -134,12 +134,45 @@ export function ChatMessage({
               variant="ghost"
               size="icon"
               onClick={async () => {
+                // 检查内容是否为空
+                const textToCopy = content?.trim() || ''
+                if (!textToCopy) {
+                  toast.error('没有可复制的内容')
+                  return
+                }
+
                 try {
-                  await navigator.clipboard.writeText(content)
-                  toast.success('已复制到剪贴板')
+                  // 优先使用现代Clipboard API
+                  if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textToCopy)
+                    toast.success('已复制到剪贴板')
+                  } else {
+                    // 备用方案：使用传统的document.execCommand
+                    const textArea = document.createElement('textarea')
+                    textArea.value = textToCopy
+                    textArea.style.position = 'fixed'
+                    textArea.style.left = '-999999px'
+                    textArea.style.top = '-999999px'
+                    document.body.appendChild(textArea)
+                    textArea.focus()
+                    textArea.select()
+
+                    try {
+                      const successful = document.execCommand('copy')
+                      document.body.removeChild(textArea)
+                      if (successful) {
+                        toast.success('已复制到剪贴板')
+                      } else {
+                        throw new Error('execCommand失败')
+                      }
+                    } catch (err) {
+                      document.body.removeChild(textArea)
+                      throw err
+                    }
+                  }
                 } catch (error) {
-                  console.error('复制失败:', error)
-                  toast.error('复制失败，请重试')
+                  console.error('复制失败详细错误:', error)
+                  toast.error(`复制失败: ${error.message || '未知错误'}`)
                 }
               }}
               className="h-7 w-7"
