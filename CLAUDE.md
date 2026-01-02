@@ -556,15 +556,144 @@ DATABASE_URL="file:./dev.db"  # 开发环境
 
 开发新功能时，使用MCP工具`spec-workflow-guide`获取完整流程说明。
 
+### 语音对话功能
+
+**功能概述：**
+PONT-PONTA平台集成了完整的语音交互能力，支持语音输入（STT）、语音输出（TTS）和端到端语音对话，使用火山引擎语音服务（豆包同款）。
+
+**核心功能：**
+
+1. **语音输入（STT - Speech to Text）**
+   - 点击麦克风按钮开始录音
+   - 实时显示音量波形动画
+   - 录音时长限制：60秒
+   - 自动调用火山引擎ASR API识别语音
+   - 识别结果自动填入输入框
+
+2. **语音输出（TTS - Text to Speech）**
+   - 每条AI回复下方显示播放按钮
+   - 支持播放控制（播放/暂停/进度条）
+   - 支持音速调节（0.5x - 2.0x）
+   - 多种音色可选（女声/男声/童声）
+
+3. **端到端语音对话（规划中）**
+   - 自动语音识别 + 播放循环
+   - 解放双手的免提对话模式
+
+**技术实现：**
+
+```
+lib/volcengine/
+├── auth.ts              # 火山引擎HMAC-SHA1签名认证
+├── types.ts             # ASR/TTS类型定义
+├── asr.ts               # 语音识别服务（音频→文字）
+└── tts.ts               # 语音合成服务（文字→音频）
+
+app/api/voice/
+├── asr/route.ts         # POST /api/voice/asr
+└── tts/route.ts         # POST /api/voice/tts
+
+hooks/
+├── useVoiceRecorder.ts  # 录音逻辑Hook（MediaRecorder API）
+└── useVoicePlayer.ts    # 播放逻辑Hook（Web Audio API）
+
+components/chat/
+├── VoiceRecorder.tsx    # 录音UI组件（麦克风+波形+时长）
+└── VoicePlayer.tsx      # 播放UI组件（播放器+进度条+音速）
+```
+
+**使用方法：**
+
+1. **语音输入：**
+   - 在聊天界面点击麦克风按钮（🎤）
+   - 允许浏览器访问麦克风权限
+   - 开始说话，可以看到实时音量波形
+   - 再次点击停止，系统自动识别语音
+   - 识别结果自动填入输入框
+
+2. **语音输出：**
+   - 每条AI消息下方显示VoicePlayer组件
+   - 点击播放按钮（▶️）开始播放语音
+   - 支持拖动进度条跳转
+   - 点击音速按钮切换（1.0x / 1.5x / 2.0x）
+
+**API端点：**
+
+- `POST /api/voice/asr` - 语音识别
+  - Content-Type: multipart/form-data
+  - Body: audio（文件）、format（格式）、sampleRate（采样率）
+  - Response: `{ success: true, text: "识别到的文字" }`
+
+- `POST /api/voice/tts` - 语音合成
+  - Content-Type: application/json
+  - Body: `{ text: "要合成的文字", voiceType: "音色ID", speed: 1.0 }`
+  - Response: 音频二进制数据（audio/mpeg）
+
+**环境变量配置：**
+
+```env
+# 火山引擎语音服务（豆包同款）
+VOLCENGINE_APP_ID=6500723094
+VOLCENGINE_ACCESS_KEY_ID=c0CfuUGCqJMEw8QD53pdiTmwcLAA6Ki_
+VOLCENGINE_SECRET_ACCESS_KEY=vUfTeTEM4_-O-v3wPRlaKqtOSEp6tLCG
+```
+
+**获取方式：**
+1. 注册火山引擎账号：https://console.volcengine.com/
+2. 开通语音识别（ASR）和语音合成（TTS）服务
+3. 在控制台获取APP_ID、ACCESS_KEY_ID、SECRET_ACCESS_KEY
+
+**支持的音色：**
+- `zh_female_shuangkuaisisi_moon_bigtts` - 女声快思（默认）
+- `zh_female_wennuannuan_moon_bigtts` - 女声温暖
+- `zh_male_qingxing_moon_bigtts` - 男声磁性
+- `zh_child_qingxin_moon_bigtts` - 童声活泼
+
+**注意事项：**
+⚠️ **麦克风权限**：首次使用需要允许浏览器访问麦克风
+⚠️ **HTTPS要求**：语音功能需要HTTPS环境（或localhost）
+⚠️ **音频格式**：录音格式为audio/webm，自动转换为PCM发送给ASR
+⚠️ **时长限制**：单次录音最长60秒，超过自动停止
+⚠️ **兼容性**：支持Chrome 80+、Safari 13+、Edge 80+
+⚠️ **网络延迟**：ASR识别约1-2秒，TTS生成约1秒
+
+**性能指标：**
+- ASR识别延迟：< 2秒（从录音结束到返回文字）
+- TTS生成延迟：< 1秒（从请求到返回音频）
+- 端到端延迟：< 5秒（从用户说话到听到AI回复）
+- 音频质量：16kHz采样率，单声道，MP3格式
+
+**调试技巧：**
+```bash
+# 测试ASR API
+curl -X POST http://localhost:3000/api/voice/asr \
+  -H "Cookie: auth-token=YOUR_TOKEN" \
+  -F "audio=@test.wav" \
+  -F "format=wav"
+
+# 测试TTS API
+curl -X POST http://localhost:3000/api/voice/tts \
+  -H "Cookie: auth-token=YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"你好，我是AI助手"}' \
+  --output test.mp3
+```
+
+**参考文档：**
+- [火山引擎语音识别文档](https://www.volcengine.com/docs/6561/1354869)
+- [火山引擎语音合成文档](https://www.volcengine.com/docs/6561/1257584)
+- 项目规格文档：`.spec-workflow/specs/voice-chat/`
+
 ### 已知限制
 
 - 暂未集成支付功能（订单状态为PENDING，需要手动更新）
 - 暂未实现NFC芯片的Web API集成（目前仅支持激活码方式）
 - Coze API错误处理可以更详细
 - 暂无自动化测试覆盖
+- 端到端语音通话模式（语音循环）尚未实现
 
 ---
 
-**最后更新**：2025-12-26
-**项目状态**：生产就绪，已完成核心功能开发
+**最后更新**：2025-01-02
+**项目状态**：生产就绪，已完成核心功能开发 + 语音对话功能
 **文档维护**：如有架构变动，请及时更新此文档以保持与代码同步
