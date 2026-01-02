@@ -172,7 +172,8 @@ export function ChatMessage({
                   }
                 } catch (error) {
                   console.error('复制失败详细错误:', error)
-                  toast.error(`复制失败: ${error.message || '未知错误'}`)
+                  const errorMessage = error instanceof Error ? error.message : '未知错误'
+                  toast.error(`复制失败: ${errorMessage}`)
                 }
               }}
               className="h-7 w-7"
