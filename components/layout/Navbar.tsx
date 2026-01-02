@@ -43,17 +43,17 @@ export function Navbar() {
   ]
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-pop-pink/5 to-pop-yellow/5 backdrop-blur-md border-b-2 border-pop-yellow/30">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo 和品牌名 */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white font-bold">
-              碰
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              碰嗒碰嗒
-            </span>
+          <Link href="/" className="flex items-center gap-2 hover:scale-105 transition-transform">
+            {/* 使用新的SVG Logo */}
+            <img
+              src="/images/brand/logo.svg"
+              alt="PONT-PONTA"
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* 桌面端导航链接 */}
@@ -66,7 +66,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm font-medium text-gray-600 hover:text-pop-pink font-medium transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -164,7 +164,7 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               /* 未登录：显示登录按钮 */
-              <Button asChild>
+              <Button asChild className="rounded-full bg-gradient-to-r from-pop-pink to-pop-orange hover:opacity-90">
                 <Link href="/login">
                   <User className="w-4 h-4 mr-2" />
                   登录
@@ -192,7 +192,7 @@ export function Navbar() {
 
       {/* 移动端菜单 */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-white dark:bg-gray-900">
+        <div className="md:hidden border-t bg-gradient-to-b from-white to-pop-yellow/10">
           <div className="container mx-auto px-4 py-4 space-y-3">
             {navLinks.map((link) => {
               // 未登录且非公开链接，不显示
@@ -203,7 +203,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="block py-2 text-sm font-medium text-gray-600 hover:text-pop-pink font-medium transition-colors"
                 >
                   {link.label}
                 </Link>

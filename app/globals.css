@@ -1,55 +1,63 @@
 @import "tailwindcss";
 
 /* 碰嗒碰嗒品牌主题色 */
+/* 碰嗒碰嗒 × POP MART 泡泡马特风格主题色 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFF8F0; /* 奶白色背景 */
+  --foreground: #2D3436; /* 深灰色文字 */
 
-  /* 品牌主色：珊瑚粉 - 活泼、温暖 */
-  --primary: #FF6B6B;
+  /* 泡泡马特配色系统 */
+  --pop-yellow: #FFD93D; /* 活力黄 */
+  --pop-pink: #FF6B9D; /* 甜美粉 */
+  --pop-blue: #6BCB77; /* 天空蓝 */
+  --pop-orange: #FF9F1C; /* 亮橙色 */
+
+  /* 品牌主色：甜美粉 - 活泼、可爱 */
+  --primary: #FF6B9D;
   --primary-foreground: #ffffff;
 
-  /* 品牌辅色：青绿色 - 清新 */
-  --secondary: #4ECDC4;
-  --secondary-foreground: #ffffff;
+  /* 品牌辅色：活力黄 - 快乐、阳光 */
+  --secondary: #FFD93D;
+  --secondary-foreground: #2D3436;
 
-  /* 强调色：明黄色 - 快乐 */
-  --accent: #FFE66D;
-  --accent-foreground: #292F36;
+  /* 强调色：亮橙色 - 温暖、活力 */
+  --accent: #FF9F1C;
+  --accent-foreground: #ffffff;
 
   /* 深色：专业灰 */
-  --dark: #292F36;
+  --dark: #2D3436;
   --dark-foreground: #ffffff;
 
-  /* 成功色 */
+  /* 成功色：天空蓝 */
   --success: #6BCB77;
   --success-foreground: #ffffff;
 
-  /* 警告色 */
+  /* 警告色：活力黄 */
   --warning: #FFD93D;
-  --warning-foreground: #292F36;
+  --warning-foreground: #2D3436;
 
-  /* 错误色 */
-  --destructive: #FF6B6B;
+  /* 错误色：甜美粉 */
+  --destructive: #FF6B9D;
   --destructive-foreground: #ffffff;
 
   /* 边框和卡片 */
   --border: #e5e5e5;
   --input: #e5e5e5;
-  --ring: #FF6B6B;
+  --ring: #FF6B9D;
 
   /* 卡片背景 */
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #2D3436;
 
   /* popover */
   --popover: #ffffff;
-  --popover-foreground: #171717;
+  --popover-foreground: #2D3436;
 
   /* muted */
   --muted: #f5f5f5;
-  --muted-foreground: #737373;
+  --muted-foreground: #636E72;
 }
+
 
 @theme inline {
   /* 基础颜色 */
@@ -65,6 +73,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-dark: var(--dark);
   --color-dark-foreground: var(--dark-foreground);
+
+  /* 泡泡马特配色 */
+  --color-pop-yellow: var(--pop-yellow);
+  --color-pop-pink: var(--pop-pink);
+  --color-pop-blue: var(--pop-blue);
+  --color-pop-orange: var(--pop-orange);
 
   /* 语义化颜色 */
   --color-success: var(--success);
@@ -89,11 +103,12 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* 圆角 */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  /* 圆角 - 泡泡马特风格（更圆润） */
+  --radius-sm: 0.5rem;   /* 8px */
+  --radius-md: 0.75rem;  /* 12px */
+  --radius-lg: 1rem;     /* 16px */
+  --radius-xl: 1.25rem;  /* 20px */
+  --radius-2xl: 1.5rem;  /* 24px */
 }
 
 /* 暗色模式 */

@@ -24,41 +24,49 @@ export default function HomePage() {
       {/* 导航栏 */}
       <Navbar />
 
-      {/* Hero 区域 */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
-        <div className="container mx-auto px-4 py-24 md:py-32">
+      {/* Hero 区域 - 泡泡马特风格横幅 */}
+      <section className="relative overflow-hidden">
+        {/* 横幅背景图 */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/home/hero-banner-1.png"
+            alt="PONT-PONTA 盲盒世界"
+            className="w-full h-full object-cover"
+          />
+          {/* 渐变遮罩 */}
+          <div className="absolute inset-0 bg-gradient-to-r from-pop-pink/80 via-pop-yellow/60 to-pop-blue/80" />
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 py-24 md:py-32">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             {/* 品牌标题 */}
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-7xl font-bold animate-collision">
-                <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  碰嗒碰嗒
-                </span>
+              <h1 className="text-5xl md:text-7xl font-bold animate-collision text-white drop-shadow-lg">
+                PONT-PONTA
               </h1>
-              <p className="text-2xl md:text-3xl text-muted-foreground font-medium">
+              <p className="text-2xl md:text-3xl text-white font-medium drop-shadow-md">
+                × POP MART
+              </p>
+              <p className="text-xl md:text-2xl text-white/90 font-medium">
                 AI 智能体盲盒平台
               </p>
             </div>
 
             {/* 副标题 */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              通过 NFC 芯片碰一碰，唤醒你的专属 AI 智能体伙伴！
+            <p className="text-lg md:text-xl text-white max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+              每一个盲盒都藏着一个独特的 AI 角色，等待你来发现！
               <br />
-              每一个盲盒都藏着一个独特的 AI 角色，等待你来发现。
+              温暖治愈，快乐陪伴，就在PONT-PONTA
             </p>
 
             {/* CTA 按钮 */}
             <HeroActions />
           </div>
         </div>
-
-        {/* 装饰元素 */}
-        <div className="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
       </section>
 
       {/* 特性展示 */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      <section className="py-20 bg-gradient-to-b from-pop-yellow/5 to-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -71,10 +79,10 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 特性 1 */}
-            <Card className="border-2 hover:border-primary transition-colors">
+            <Card className="border-2 border-pop-yellow/30 hover:border-pop-pink hover:shadow-xl transition-all duration-300 rounded-2xl hover:-translate-y-1">
               <CardContent className="p-6 text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Gift className="w-8 h-8 text-primary" />
+                <div className="w-16 h-16 mx-auto bg-pop-pink/10 rounded-2xl flex items-center justify-center">
+                  <Gift className="w-8 h-8 text-pop-pink" />
                 </div>
                 <h3 className="text-xl font-bold">实物盲盒</h3>
                 <p className="text-sm text-muted-foreground">
@@ -84,10 +92,10 @@ export default function HomePage() {
             </Card>
 
             {/* 特性 2 */}
-            <Card className="border-2 hover:border-secondary transition-colors">
+            <Card className="border-2 border-pop-yellow/30 hover:border-pop-blue hover:shadow-xl transition-all duration-300 rounded-2xl hover:-translate-y-1">
               <CardContent className="p-6 text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-secondary/10 rounded-2xl flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-secondary" />
+                <div className="w-16 h-16 mx-auto bg-pop-blue/10 rounded-2xl flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-pop-blue" />
                 </div>
                 <h3 className="text-xl font-bold">独特角色</h3>
                 <p className="text-sm text-muted-foreground">
@@ -97,10 +105,10 @@ export default function HomePage() {
             </Card>
 
             {/* 特性 3 */}
-            <Card className="border-2 hover:border-accent transition-colors">
+            <Card className="border-2 border-pop-yellow/30 hover:border-pop-orange hover:shadow-xl transition-all duration-300 rounded-2xl hover:-translate-y-1">
               <CardContent className="p-6 text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center">
-                  <Zap className="w-8 h-8 text-accent" />
+                <div className="w-16 h-16 mx-auto bg-pop-orange/10 rounded-2xl flex items-center justify-center">
+                  <Zap className="w-8 h-8 text-pop-orange" />
                 </div>
                 <h3 className="text-xl font-bold">一碰激活</h3>
                 <p className="text-sm text-muted-foreground">
@@ -110,10 +118,10 @@ export default function HomePage() {
             </Card>
 
             {/* 特性 4 */}
-            <Card className="border-2 hover:border-primary transition-colors">
+            <Card className="border-2 border-pop-yellow/30 hover:border-pop-pink hover:shadow-xl transition-all duration-300 rounded-2xl hover:-translate-y-1">
               <CardContent className="p-6 text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <MessageCircle className="w-8 h-8 text-primary" />
+                <div className="w-16 h-16 mx-auto bg-pop-pink/10 rounded-2xl flex items-center justify-center">
+                  <MessageCircle className="w-8 h-8 text-pop-pink" />
                 </div>
                 <h3 className="text-xl font-bold">智能对话</h3>
                 <p className="text-sm text-muted-foreground">
@@ -216,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* 页脚 */}
-      <footer className="bg-white dark:bg-gray-900 border-t py-8">
+      <footer className="bg-gradient-to-b from-pop-yellow/5 to-white border-t py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>© 2024 碰嗒碰嗒 (PONT-PONTA). All rights reserved.</p>
           <p className="mt-2">AI 智能体盲盒平台 - 让 AI 走进现实</p>

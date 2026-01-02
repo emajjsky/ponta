@@ -103,7 +103,7 @@ function ActivatePageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pop-pink/10 via-pop-yellow/10 to-pop-blue/10 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* 返回按钮 */}
         <div className="mb-4">
@@ -116,17 +116,24 @@ function ActivatePageContent() {
 
         {/* 标题 */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-full mb-4 animate-collision">
-            <Gift className="w-10 h-10 text-primary" />
+          {/* 盲盒图片 */}
+          <div className="mb-6">
+            <img
+              src="/images/activate/activate-hero.png"
+              alt="激活盲盒"
+              className="w-48 h-auto mx-auto animate-fadeIn"
+            />
           </div>
-          <h1 className="text-3xl font-bold mb-2">激活智能体</h1>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pop-pink to-pop-orange bg-clip-text text-transparent">
+            激活智能体
+          </h1>
           <p className="text-muted-foreground">
-            输入盲盒中的激活码，唤醒你的 AI 伙伴
+            输入盲盒中的激活码，唤醒你的 AI 伙伴 ✨
           </p>
         </div>
 
         {/* 激活卡片 */}
-        <Card>
+        <Card className="border-2 border-pop-yellow/30 shadow-xl rounded-2xl">
           <CardHeader>
             <CardTitle>输入激活码</CardTitle>
             <CardDescription>
@@ -158,14 +165,14 @@ function ActivatePageContent() {
 
               {/* 成功提示 */}
               {success && activatedAgent && (
-                <Alert className="bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <AlertDescription className="text-green-800 dark:text-green-200">
+                <Alert className="bg-pop-blue/10 border-pop-blue/30">
+                  <CheckCircle className="h-4 w-4 text-pop-blue" />
+                  <AlertDescription className="text-pop-blue-900">
                     <div className="font-semibold">激活成功！</div>
                     <div className="text-sm mt-1">
                       你已获得「{activatedAgent.name}」智能体
                     </div>
-                    <div className="text-xs mt-2 text-green-600 dark:text-green-400">
+                    <div className="text-xs mt-2 text-pop-blue">
                       正在跳转到我的智能体...
                     </div>
                   </AlertDescription>
@@ -182,7 +189,7 @@ function ActivatePageContent() {
               {/* 提交按钮 */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-gradient-to-r from-pop-pink to-pop-orange hover:opacity-90 text-white font-semibold"
                 size="lg"
                 disabled={isLoading || success || code.length !== 15}
               >
@@ -225,7 +232,7 @@ function ActivatePageContent() {
 export default function ActivatePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pop-pink/10 via-pop-yellow/10 to-pop-blue/10 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto" />
           <p className="mt-2 text-muted-foreground">加载中...</p>
