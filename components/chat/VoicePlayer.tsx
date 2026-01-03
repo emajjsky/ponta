@@ -75,6 +75,7 @@ export function VoicePlayer({
         })
 
         if (!response.ok) {
+          toast.dismiss('tts-loading')
           const error = await response.json()
           throw new Error(error.error || '语音生成失败')
         }
@@ -89,6 +90,7 @@ export function VoicePlayer({
 
       } catch (err) {
         const error = err as Error
+        toast.dismiss('tts-loading')
         toast.error(`语音播放失败: ${error.message}`)
         console.error('TTS错误:', error)
       }

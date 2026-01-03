@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     // 获取请求体
     const body = await request.json()
-    const { name, slug, provider, providerConfig, seriesId, rarity, avatar, description, abilities, price, stock, isActive, systemPrompt } = body
+    const { name, slug, provider, providerConfig, seriesId, rarity, avatar, description, abilities, price, stock, isActive, systemPrompt, voiceType } = body
 
     // 参数验证
     if (!name || !slug || !provider || !providerConfig) {
@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
         stock: stock || 0,
         isActive: isActive !== undefined ? isActive : true,
         systemPrompt: systemPrompt || null,
+        voiceType: voiceType || 'zh_female_shuangkuaisisi_moon_bigtts', // 添加音色配置
       },
     })
 

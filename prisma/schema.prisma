@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -95,6 +95,7 @@ model Agent {
   stock          Int       @default(0)
   isActive       Boolean   @default(true)
   systemPrompt   String?
+  voiceType      String?   @default("zh_female_shuangkuaisisi_moon_bigtts") // 火山引擎TTS音色ID
   deletedAt      DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

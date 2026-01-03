@@ -93,7 +93,8 @@ export async function PUT(
       price,
       stock,
       isActive,
-      systemPrompt
+      systemPrompt,
+      voiceType
     } = body
 
     // 检查智能体是否存在
@@ -149,6 +150,7 @@ export async function PUT(
     if (stock !== undefined) updateData.stock = stock
     if (isActive !== undefined) updateData.isActive = isActive
     if (systemPrompt !== undefined) updateData.systemPrompt = systemPrompt
+    if (voiceType !== undefined) updateData.voiceType = voiceType // 添加音色更新
 
     // 更新智能体
     const agent = await prisma.agent.update({

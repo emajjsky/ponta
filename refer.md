@@ -34,4 +34,5 @@ https://www.volcengine.com/docs/6561/1594356?lang=zh
 https://www.volcengine.com/docs/6561/1597643?lang=zh
 ## 端到端iOS SDK 接口文档
 https://www.volcengine.com/docs/6561/1597646?lang=zh
-
+## 流式语音识别SDK开发者使用合规规范
+https://www.volcengine.com/docs/6561/108771?lang=zh

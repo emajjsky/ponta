@@ -61,6 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
 
   /**
    * 刷新用户信息
@@ -75,12 +76,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.ok) {
         const result = await response.json()
         setUser(result.user)
+        setRetryCount(0) // 成功后重置重试计数
+      } else if (response.status === 500 && retryCount < 3) {
+        // 500 错误时重试，最多3次
+        console.warn('API 500错误，重试中...', retryCount + 1)
+        setRetryCount(retryCount + 1)
+        setTimeout(() => refreshUser(), 1000 * (retryCount + 1))
       } else {
         setUser(null)
+        setRetryCount(0)
       }
     } catch (error) {
       console.error('获取用户信息失败:', error)
       setUser(null)
+      setRetryCount(0)
     } finally {
       setLoading(false)
     }

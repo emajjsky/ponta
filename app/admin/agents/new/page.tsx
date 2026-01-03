@@ -19,6 +19,7 @@ import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { PasswordInput } from '@/components/ui/password-input'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { VoiceTypeSelector } from '@/components/admin/VoiceTypeSelector'
 
 interface Series {
   id: string
@@ -48,6 +49,7 @@ export default function NewAgentPage() {
     description: '',
     abilities: '',
     systemPrompt: '',
+    voiceType: '7426720361753903141', // 默认音色（Coze的爽快思思）
     isActive: true,
   })
 
@@ -105,7 +107,7 @@ export default function NewAgentPage() {
     }))
   }
 
-  // 处理provider切换，自动填充默认值
+  // 处理provider切换，自动填充默认值和切换音色体系
   const handleProviderChange = (value: 'COZE' | 'OPENAI') => {
     setFormData((prev) => {
       const newFormData = { ...prev, provider: value }
@@ -115,12 +117,16 @@ export default function NewAgentPage() {
         newFormData.endpoint = prev.endpoint || defaultConfig.openai.endpoint
         newFormData.apiKey = prev.apiKey || defaultConfig.openai.apiKey
         newFormData.model = prev.model || defaultConfig.openai.model
+        // 切换到火山引擎音色（voice_type格式）
+        newFormData.voiceType = 'zh_female_shuangkuaisisi_moon_bigtts'
       }
 
       // 如果切换到Coze且有默认配置，自动填充
       if (value === 'COZE' && defaultConfig?.coze) {
         newFormData.botId = prev.botId || defaultConfig.coze.botId
         newFormData.apiToken = prev.apiToken || defaultConfig.coze.apiToken
+        // 切换到Coze音色（voice_id格式）
+        newFormData.voiceType = '7426720361753903141' // 爽快思思
       }
 
       return newFormData
@@ -185,6 +191,7 @@ export default function NewAgentPage() {
           stock: 0,
           abilities,
           systemPrompt: formData.systemPrompt,
+          voiceType: formData.voiceType, // 添加音色配置
           isActive: formData.isActive,
           rarity: formData.rarity,
         }),
@@ -514,6 +521,24 @@ export default function NewAgentPage() {
                   </p>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  语音合成音色
+                </label>
+                <VoiceTypeSelector
+                  provider={formData.provider}
+                  value={formData.voiceType}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, voiceType: value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.provider === 'COZE'
+                    ? 'Coze API的音色列表（使用Coze voice_id）'
+                    : '火山引擎的音色列表（使用voice_type）'}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

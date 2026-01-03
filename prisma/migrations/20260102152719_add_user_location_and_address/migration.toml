@@ -1,4 +1,0 @@
-# This is a Prisma schema migration file for PostgreSQL
-# Learn more: https://pris.ly/d/migration
-
-provider = "postgresql"

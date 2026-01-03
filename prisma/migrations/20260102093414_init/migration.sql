@@ -6,14 +6,16 @@ CREATE TABLE "users" (
     "password" TEXT NOT NULL,
     "nickname" TEXT NOT NULL,
     "avatar" TEXT,
+    "phone" TEXT,
+    "phone_verified" BOOLEAN NOT NULL DEFAULT false,
+    "province" TEXT,
+    "city" TEXT,
+    "district" TEXT,
     "bio" TEXT,
     "role" TEXT NOT NULL DEFAULT 'USER',
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-    "level" INTEGER NOT NULL DEFAULT 1,
-    "experience" INTEGER NOT NULL DEFAULT 0,
     "totalAgents" INTEGER NOT NULL DEFAULT 0,
     "totalChats" INTEGER NOT NULL DEFAULT 0,
-    "totalAchievements" INTEGER NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -111,6 +113,7 @@ CREATE TABLE "chat_histories" (
     "userAgentId" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "images" TEXT,
     "conversationId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "chat_histories_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -119,26 +122,47 @@ CREATE TABLE "chat_histories" (
 );
 
 -- CreateTable
-CREATE TABLE "achievements" (
+CREATE TABLE "exchanges" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "slug" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "icon" TEXT NOT NULL,
-    "category" TEXT NOT NULL,
-    "rarity" TEXT NOT NULL DEFAULT 'COMMON',
-    "rewardXp" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "userId" TEXT NOT NULL,
+    "activationCodeId" TEXT NOT NULL,
+    "wantedAgentId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "exchanges_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "exchanges_activationCodeId_fkey" FOREIGN KEY ("activationCodeId") REFERENCES "activation_codes" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "exchanges_wantedAgentId_fkey" FOREIGN KEY ("wantedAgentId") REFERENCES "agents" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
-CREATE TABLE "user_achievements" (
+CREATE TABLE "exchange_proposals" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "exchangeId" TEXT NOT NULL,
+    "proposerUserId" TEXT NOT NULL,
+    "proposerCodeId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "exchange_proposals_exchangeId_fkey" FOREIGN KEY ("exchangeId") REFERENCES "exchanges" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "exchange_proposals_proposerUserId_fkey" FOREIGN KEY ("proposerUserId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "exchange_proposals_proposerCodeId_fkey" FOREIGN KEY ("proposerCodeId") REFERENCES "activation_codes" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "addresses" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
-    "achievementId" TEXT NOT NULL,
-    "unlockedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "user_achievements_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "user_achievements_achievementId_fkey" FOREIGN KEY ("achievementId") REFERENCES "achievements" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "province" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "district" TEXT NOT NULL,
+    "detail" TEXT NOT NULL,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -148,13 +172,13 @@ CREATE UNIQUE INDEX "users_uid_key" ON "users"("uid");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
+
+-- CreateIndex
 CREATE INDEX "users_email_idx" ON "users"("email");
 
 -- CreateIndex
 CREATE INDEX "users_uid_idx" ON "users"("uid");
-
--- CreateIndex
-CREATE INDEX "users_level_idx" ON "users"("level");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "series_slug_key" ON "series"("slug");
@@ -235,19 +259,25 @@ CREATE INDEX "chat_histories_agentId_idx" ON "chat_histories"("agentId");
 CREATE INDEX "chat_histories_conversationId_idx" ON "chat_histories"("conversationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "achievements_slug_key" ON "achievements"("slug");
+CREATE UNIQUE INDEX "exchanges_activationCodeId_key" ON "exchanges"("activationCodeId");
 
 -- CreateIndex
-CREATE INDEX "achievements_slug_idx" ON "achievements"("slug");
+CREATE INDEX "exchanges_status_idx" ON "exchanges"("status");
 
 -- CreateIndex
-CREATE INDEX "achievements_category_idx" ON "achievements"("category");
+CREATE INDEX "exchanges_userId_idx" ON "exchanges"("userId");
 
 -- CreateIndex
-CREATE INDEX "user_achievements_userId_idx" ON "user_achievements"("userId");
+CREATE INDEX "exchanges_wantedAgentId_idx" ON "exchanges"("wantedAgentId");
 
 -- CreateIndex
-CREATE INDEX "user_achievements_achievementId_idx" ON "user_achievements"("achievementId");
+CREATE INDEX "exchange_proposals_exchangeId_idx" ON "exchange_proposals"("exchangeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_achievements_userId_achievementId_key" ON "user_achievements"("userId", "achievementId");
+CREATE INDEX "exchange_proposals_status_idx" ON "exchange_proposals"("status");
+
+-- CreateIndex
+CREATE INDEX "exchange_proposals_proposerUserId_idx" ON "exchange_proposals"("proposerUserId");
+
+-- CreateIndex
+CREATE INDEX "addresses_userId_idx" ON "addresses"("userId");

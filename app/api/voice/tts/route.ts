@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
-import { VolcEngineTTS, synthesizeSpeech } from '@/lib/volcengine/tts'
+import { synthesizeSpeech as volcSynthesizeSpeech } from '@/lib/volcengine/tts'
+import { synthesizeSpeech as cozeSynthesizeSpeech } from '@/lib/coze/tts'
 
 /**
  * POST /api/voice/tts
@@ -19,6 +20,10 @@ import { VolcEngineTTS, synthesizeSpeech } from '@/lib/volcengine/tts'
  * Response:
  *   Content-Type: audio/mpeg
  *   Body: <音频二进制数据>
+ *
+ * Provider自动识别逻辑:
+ *   - voiceType为纯数字（如"7426720361732915209"）→ Coze TTS
+ *   - voiceType为字符串格式（如"zh_female_xxx"）→ VolcEngine TTS
  */
 export async function POST(request: NextRequest) {
   try {
@@ -75,13 +80,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 5. 调用火山引擎TTS
-    const audioBuffer = await synthesizeSpeech(text, {
-      voiceType,
-      speed,
-      volume,
-      format
-    })
+    // 5. 根据voiceType格式自动选择TTS Provider
+    let audioBuffer: Buffer
+
+    // 判断是否为Coze音色ID（纯数字格式，如"7426720361732915209"）
+    const isCozeVoiceId = /^\d+$/.test(voiceType || '')
+
+    if (isCozeVoiceId) {
+      // 使用Coze TTS
+      console.log(`🎤 使用Coze TTS API，音色ID: ${voiceType}`)
+
+      audioBuffer = await cozeSynthesizeSpeech(text, {
+        voiceId: voiceType,
+        format: format as any,
+        speed,
+        loudnessRate: volume ? volume - 50 : 0 // 将0-100转换为-50~50
+      })
+    } else {
+      // 使用VolcEngine TTS
+      console.log(`🎤 使用VolcEngine TTS API，音色: ${voiceType}`)
+
+      audioBuffer = await volcSynthesizeSpeech(text, {
+        voiceType,
+        speed,
+        volume,
+        format
+      })
+    }
 
     // 6. 返回音频流
     return new NextResponse(audioBuffer, {
@@ -115,7 +140,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    service: 'VolcEngine TTS',
+    service: 'Hybrid TTS (Coze + VolcEngine)',
     message: '语音合成服务运行中'
   })
 }

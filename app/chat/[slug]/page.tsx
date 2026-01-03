@@ -5,10 +5,11 @@ import prisma from '@/lib/prisma'
 import { ChatInterface } from '@/components/chat/ChatInterface'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MessageCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { ClearChatButton } from '@/components/chat/ClearChatButton'
+import { ChatHeader } from '@/components/chat/ChatHeader'
 
 /**
  * 对话页面
@@ -91,28 +92,11 @@ export default async function ChatPage({
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* 顶部栏 */}
-      <div className="border-b bg-white dark:bg-gray-900 px-4 py-3 flex items-center gap-3">
-        {/* 返回按钮 */}
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/my-agents">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-        </Button>
-
-        {/* 智能体信息 */}
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={agent.avatar} alt={agent.name} />
-          <AvatarFallback>{agent.name[0]}</AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1">
-          <h1 className="font-semibold">{agent.name}</h1>
-          <p className="text-xs text-muted-foreground">在线</p>
-        </div>
-
-        {/* 清空对话按钮 */}
-        <ClearChatButton userAgentId={userAgent.id} agentName={agent.name} />
-      </div>
+      <ChatHeader
+        agentName={agent.name}
+        agentAvatar={agent.avatar}
+        userAgentId={userAgent.id}
+      />
 
       {/* 对话界面 */}
       <div className="flex-1 overflow-hidden">
@@ -120,6 +104,7 @@ export default async function ChatPage({
           agentSlug={agent.slug}
           agentName={agent.name}
           agentAvatar={agent.avatar}
+          agentVoiceType={agent.voiceType || undefined}
         />
       </div>
     </div>

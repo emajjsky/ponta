@@ -4,35 +4,29 @@ import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Bot, User, RotateCcw, Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { AudioButton } from './AudioButton'
 
-/**
- * 图片附件接口
- */
 export interface ImageAttachment {
   id: string
   base64: string
   name: string
 }
 
-/**
- * 聊天消息组件属性
- */
 export interface ChatMessageProps {
   role: 'user' | 'assistant'
   content: string
-  images?: ImageAttachment[] // 图片附件
+  images?: ImageAttachment[]
   timestamp?: number
-  isStreaming?: boolean // 是否正在流式输出
-  agentAvatar?: string // AI 头像
-  agentName?: string // AI 名称
-  onRegenerate?: () => void // 重新生成回调
-  onCopy?: () => void // 复制回调
+  isStreaming?: boolean
+  agentAvatar?: string
+  agentName?: string
+  voiceType?: string
+  isLatest?: boolean
+  autoPlayAudio?: boolean
+  onRegenerate?: () => void
+  onCopy?: () => void
 }
 
-/**
- * 聊天消息组件
- * 展示单条聊天消息（支持图片）
- */
 export function ChatMessage({
   role,
   content,
@@ -41,6 +35,9 @@ export function ChatMessage({
   isStreaming = false,
   agentAvatar,
   agentName = 'AI',
+  voiceType,
+  isLatest = false,
+  autoPlayAudio = false,
   onRegenerate,
   onCopy,
 }: ChatMessageProps) {
@@ -48,7 +45,6 @@ export function ChatMessage({
 
   return (
     <div className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      {/* 头像 */}
       <Avatar className={`w-8 h-8 ${isUser ? 'bg-primary' : 'bg-secondary'}`}>
         {isUser ? (
           <>
@@ -66,9 +62,7 @@ export function ChatMessage({
         )}
       </Avatar>
 
-      {/* 消息气泡 */}
       <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
-        {/* 消息内容 */}
         <div
           className={`
             px-4 py-2 rounded-lg
@@ -79,14 +73,12 @@ export function ChatMessage({
             ${isStreaming && !isUser ? 'animate-pulse' : ''}
           `}
         >
-          {/* AI 名称标签（仅在 AI 消息且非流式时显示） */}
           {!isUser && !isStreaming && agentName && (
             <div className="text-xs font-semibold mb-1 opacity-70">
               {agentName}
             </div>
           )}
 
-          {/* 图片附件（显示在文本上方） */}
           {images && images.length > 0 && (
             <div className={`flex flex-wrap gap-2 mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
               {images.map((image) => (
@@ -100,25 +92,21 @@ export function ChatMessage({
             </div>
           )}
 
-          {/* 消息文本 */}
           <p className="text-sm whitespace-pre-wrap break-words">{content}</p>
 
-          {/* 流式输出指示器 */}
           {isStreaming && !isUser && (
             <span className="inline-block w-2 h-2 bg-current ml-1 animate-bounce" />
           )}
         </div>
 
-        {/* 时间戳 */}
         {timestamp && (
           <span className="text-xs text-muted-foreground mt-1 px-1">
             {format(new Date(timestamp), 'HH:mm', { locale: zhCN })}
           </span>
         )}
 
-        {/* 操作按钮（仅在AI消息且非流式时显示） */}
         {!isUser && !isStreaming && (
-          <div className="flex gap-1 mt-2">
+          <div className="flex gap-1 mt-2 items-center">
             {onRegenerate && (
               <Button
                 variant="ghost"
@@ -134,7 +122,6 @@ export function ChatMessage({
               variant="ghost"
               size="icon"
               onClick={async () => {
-                // 检查内容是否为空
                 const textToCopy = content?.trim() || ''
                 if (!textToCopy) {
                   toast.error('没有可复制的内容')
@@ -142,12 +129,10 @@ export function ChatMessage({
                 }
 
                 try {
-                  // 优先使用现代Clipboard API
                   if (navigator.clipboard && window.isSecureContext) {
                     await navigator.clipboard.writeText(textToCopy)
                     toast.success('已复制到剪贴板')
                   } else {
-                    // 备用方案：使用传统的document.execCommand
                     const textArea = document.createElement('textarea')
                     textArea.value = textToCopy
                     textArea.style.position = 'fixed'
@@ -181,6 +166,16 @@ export function ChatMessage({
             >
               <Copy className="w-3 h-3" />
             </Button>
+
+            {isLatest && content && !isStreaming && (
+              <AudioButton
+                text={content}
+                autoPlay={autoPlayAudio}
+                voiceType={voiceType}
+                isLatest={isLatest}
+                timestamp={timestamp}
+              />
+            )}
           </div>
         )}
       </div>

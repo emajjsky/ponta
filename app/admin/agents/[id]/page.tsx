@@ -19,6 +19,7 @@ import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { PasswordInput } from '@/components/ui/password-input'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { VoiceTypeSelector } from '@/components/admin/VoiceTypeSelector'
 
 interface Agent {
   id: string
@@ -33,6 +34,7 @@ interface Agent {
   stock: number
   abilities: string[]
   systemPrompt: string
+  voiceType: string | null // 添加音色字段
   isActive: boolean
   provider: string // 添加provider字段
   providerConfig: string // 添加providerConfig字段
@@ -68,6 +70,7 @@ export default function EditAgentPage() {
     description: '',
     abilities: '',
     systemPrompt: '',
+    voiceType: 'zh_female_shuangkuaisisi_moon_bigtts', // 默认音色
     isActive: true,
   })
 
@@ -132,6 +135,7 @@ export default function EditAgentPage() {
           description: agent.description || '',
           abilities: agent.abilities.join(', '),
           systemPrompt: agent.systemPrompt || '',
+          voiceType: agent.voiceType || 'zh_female_shuangkuaisisi_moon_bigtts', // 添加音色
           isActive: agent.isActive,
         })
       } else {
@@ -159,7 +163,7 @@ export default function EditAgentPage() {
     setFormData((prev) => ({ ...prev, seriesId: value }))
   }
 
-  // 处理provider切换，自动填充默认值
+  // 处理provider切换，自动填充默认值和切换音色体系
   const handleProviderChange = (value: 'COZE' | 'OPENAI') => {
     setFormData((prev) => {
       const newFormData = { ...prev, provider: value }
@@ -169,12 +173,16 @@ export default function EditAgentPage() {
         newFormData.endpoint = prev.endpoint || defaultConfig.openai.endpoint
         newFormData.apiKey = prev.apiKey || defaultConfig.openai.apiKey
         newFormData.model = prev.model || defaultConfig.openai.model
+        // 切换到火山引擎音色（voice_type格式）
+        newFormData.voiceType = 'zh_female_shuangkuaisisi_moon_bigtts'
       }
 
       // 如果切换到Coze且有默认配置，自动填充（仅当字段为空时）
       if (value === 'COZE' && defaultConfig?.coze) {
         newFormData.botId = prev.botId || defaultConfig.coze.botId
         newFormData.apiToken = prev.apiToken || defaultConfig.coze.apiToken
+        // 切换到Coze音色（voice_id格式）
+        newFormData.voiceType = '7426720361753903141' // 爽快思思
       }
 
       return newFormData
@@ -237,6 +245,7 @@ export default function EditAgentPage() {
         stock: 0,
         abilities,
         systemPrompt: formData.systemPrompt,
+        voiceType: formData.voiceType, // 添加音色配置
         isActive: formData.isActive,
       }
 
@@ -576,6 +585,24 @@ export default function EditAgentPage() {
                   </p>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  语音合成音色
+                </label>
+                <VoiceTypeSelector
+                  provider={formData.provider}
+                  value={formData.voiceType}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, voiceType: value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.provider === 'COZE'
+                    ? 'Coze API的音色列表（使用Coze voice_id）'
+                    : '火山引擎的音色列表（使用voice_type）'}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

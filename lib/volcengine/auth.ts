@@ -100,18 +100,48 @@ export function signRequest(
  * 获取火山引擎API所需的认证Headers
  *
  * @param config 火山引擎配置
+ * @param method HTTP方法 (默认POST)
+ * @param uri 请求URI (默认/api/v1/tts)
  * @returns 包含认证信息的Headers对象
  */
-export function getAuthHeaders(config: VolcEngineConfig): Record<string, string> {
+export function getAuthHeaders(
+  config: VolcEngineConfig,
+  method: string = 'POST',
+  uri: string = '/api/v1/tts'
+): Record<string, string> {
   const timestamp = new Date().toISOString().replace(/[:.]|T/, '').split('Z')[0] + 'Z'
   const nonce = uuid() // 使用UUID作为随机数
+
+  // 构建用于签名的headers
+  const headersToSign = {
+    'content-type': 'application/json',
+    'x-date': timestamp,
+    'x-app-id': config.appId,
+    'x-request-id': nonce
+  }
+
+  // 计算签名
+  const signature = signRequest(config, method, uri, {}, headersToSign)
+
+  // 构建signed headers字符串（小写，分号分隔）
+  const signedHeaders = Object.keys(headersToSign).map(k => k.toLowerCase()).sort().join(';')
+
+  const authHeader = `HMAC-SHA1 Credential=${config.accessKeyId}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+  
+  // 调试日志
+  console.log('=== VolcEngine认证调试 ===')
+  console.log('Timestamp:', timestamp)
+  console.log('Nonce:', nonce)
+  console.log('SignedHeaders:', signedHeaders)
+  console.log('Auth Header:', authHeader)
+  console.log('=========================')
 
   return {
     'Content-Type': 'application/json',
     'X-Date': timestamp,
     'X-App-Id': config.appId,
     'X-Request-Id': nonce,
-    'Authorization': `HMAC-SHA1 Credential=${config.accessKeyId}`
+    'Authorization': authHeader
   }
 }
 

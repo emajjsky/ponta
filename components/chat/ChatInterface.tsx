@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Send, Loader2, Image as ImageIcon, X } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { VoiceRecorder } from './VoiceRecorder'
-import { VoicePlayer } from './VoicePlayer'
 
 /**
  * 图片接口
@@ -27,13 +29,14 @@ export interface ChatInterfaceProps {
   agentSlug: string
   agentName: string
   agentAvatar: string
+  agentVoiceType?: string  // 添加智能体的音色类型
 }
 
 /**
  * 聊天界面组件
  * 完整的对话功能 + 图片上传 + 语音控制
  */
-export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfaceProps) {
+export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceType }: ChatInterfaceProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessageProps[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -45,9 +48,26 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
   // 图片相关状态
   const [images, setImages] = useState<ImageAttachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
-
   // 语音相关状态
-  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null)
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true)  // 默认开启自动播放
+
+  // 从localStorage读取初始auto-play状态并监听变化
+  useEffect(() => {
+    const stored = localStorage.getItem('chat-auto-play-enabled')
+    if (stored !== null) {
+      setAutoPlayAudio(stored === 'true')
+    }
+
+    // 监听ChatHeader派发的auto-play-change事件
+    const handleAutoPlayChange = (event: CustomEvent) => {
+      setAutoPlayAudio(event.detail)
+    }
+
+    window.addEventListener('auto-play-change', handleAutoPlayChange as EventListener)
+    return () => {
+      window.removeEventListener('auto-play-change', handleAutoPlayChange as EventListener)
+    }
+  }, [])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -373,6 +393,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
       const lastMessage = newMessages[newMessages.length - 1]
       if (lastMessage && lastMessage.role === 'assistant') {
         lastMessage.content = ''  // 清空内容，准备重新生成
+        lastMessage.timestamp = undefined  // 清空timestamp
       }
       return newMessages
     })
@@ -461,6 +482,8 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                     const lastMessage = newMessages[newMessages.length - 1]
                     if (lastMessage && lastMessage.role === 'assistant') {
                       lastMessage.timestamp = Date.now()
+                      // 去除首尾空格，修复空行问题
+                      lastMessage.content = lastMessage.content.trim()
                     }
                     return newMessages
                   })
@@ -492,6 +515,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
 
   return (
     <div className="flex flex-col h-full">
+
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {isHistoryLoading ? (
@@ -502,7 +526,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
               <p className="text-sm text-muted-foreground">正在加载对话记录...</p>
             </div>
           </div>
-        ) : messages.length === 0 && (
+        ) : messages.length === 0 ? (
           // 没有消息时的空状态
           <div className="flex items-center justify-center h-full text-center">
             <div className="space-y-3">
@@ -515,14 +539,19 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
         {messages.map((message, index) => {
-          const messageId = `${message.role}-${index}-${message.timestamp || 'streaming'}`
+          // 简单的key生成
+          const key = `${message.role}-${index}-${message.timestamp || Date.now()}`
+
+          // 判断是否为最新消息
+          const isLatest = message.role === 'assistant' && index === messages.length - 1
+
           const isLastAssistantMessage = message.role === 'assistant' && index === messages.length - 1
 
           return (
-            <div key={messageId} className="space-y-2">
+            <div key={key} className="space-y-2">
               <ChatMessage
                 {...message}
                 isStreaming={isLastAssistantMessage && isStreaming}
@@ -533,18 +562,11 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar }: ChatInterfa
                     ? handleRegenerate
                     : undefined
                 }
+                autoPlayAudio={isLatest && autoPlayAudio}
+                voiceType={agentVoiceType}
+                isLatest={isLatest}
               />
 
-              {/* AI消息的语音播放按钮 */}
-              {message.role === 'assistant' && message.content && (
-                <div className="ml-12 max-w-2xl">
-                  <VoicePlayer
-                    text={message.content}
-                    autoPlay={false}
-                    onPlayEnd={() => setPlayingMessageId(null)}
-                  />
-                </div>
-              )}
             </div>
           )
         })}
