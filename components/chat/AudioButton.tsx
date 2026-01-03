@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 
 export interface AudioButtonProps {
   text: string
-  autoPlay?: boolean
+  autoPlay?: boolean  // 保留props兼容性，但不再使用
   voiceType?: string
   isLatest?: boolean
   /** 消息时间戳，用于判断是否为新消息 */
@@ -19,7 +19,6 @@ export interface AudioButtonProps {
 
 export function AudioButton({
   text,
-  autoPlay = false,
   voiceType,
   isLatest = false,
   timestamp
@@ -28,7 +27,6 @@ export function AudioButton({
   const [isLoading, setIsLoading] = useState(false)
   const [shouldAnimate, setShouldAnimate] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const hasAutoPlayedRef = useRef(false)  // 记录本次挂载是否已自动播放过
 
   /**
    * 处理播放
@@ -96,26 +94,6 @@ export function AudioButton({
       console.error('TTS错误:', error)
     }
   }
-
-  // 自动播放逻辑：组件挂载时执行一次
-  useEffect(() => {
-    // 判断是否为新消息（5秒内）- 防止历史消息自动播放
-    const isNewMessage = timestamp && (Date.now() - timestamp) < 5000
-
-    if (autoPlay && isLatest && !hasAutoPlayedRef.current && text.trim() && text.length > 2 && isNewMessage) {
-      console.log('🎵 AudioButton: 挂载触发自动播放', {
-        autoPlay,
-        isLatest,
-        isNewMessage,
-        text: text.substring(0, 20)
-      })
-
-      hasAutoPlayedRef.current = true  // 标记已触发
-
-      // 直接调用handlePlay
-      handlePlay()
-    }
-  }, []) // 空依赖数组，只在挂载时执行一次
 
   // 播放完成处理
   useEffect(() => {

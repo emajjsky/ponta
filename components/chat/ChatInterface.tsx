@@ -71,6 +71,42 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const hasAutoPlayedRef = useRef(false)  // 防止TTS重复调用
+
+  /**
+   * 播放TTS语音
+   */
+  const playTTS = async (text: string, voiceType?: string) => {
+    try {
+      console.log('🎵 ChatInterface: playTTS被调用', {
+        text: text.substring(0, 20),
+        voiceType
+      })
+
+      const response = await fetch('/api/voice/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voiceType })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'TTS生成失败')
+      }
+
+      const audioBuffer = await response.arrayBuffer()
+      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' })
+      const audioUrl = URL.createObjectURL(audioBlob)
+
+      const audio = new Audio(audioUrl)
+      await audio.play()
+
+      console.log('🎵 ChatInterface: TTS播放成功')
+    } catch (error) {
+      console.error('🎵 ChatInterface: TTS播放失败', error)
+      toast.error(`语音播放失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    }
+  }
 
   /**
    * 加载历史消息
@@ -215,6 +251,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
     setImages([])
     setIsLoading(true)
     setIsStreaming(false)
+    hasAutoPlayedRef.current = false  // 重置TTS播放标记
 
     // 添加用户消息到列表
     const userMessageObj: ChatMessageProps = {
@@ -315,6 +352,17 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
                       lastMessage.timestamp = Date.now()
                       // 去除首尾空格，修复空行问题
                       lastMessage.content = lastMessage.content.trim()
+
+                      // ✅ 在content更新完毕后触发TTS自动播放
+                      if (autoPlayAudio && !hasAutoPlayedRef.current && lastMessage.content) {
+                        hasAutoPlayedRef.current = true
+
+                        // 使用setTimeout确保状态已更新到DOM
+                        setTimeout(() => {
+                          console.log('🎵 ChatInterface: completed事件触发自动播放')
+                          playTTS(lastMessage.content!, agentVoiceType)
+                        }, 100)
+                      }
                     }
                     return newMessages
                   })
@@ -401,6 +449,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
     // 重新发送用户消息
     setIsLoading(true)
     setIsStreaming(false)
+    hasAutoPlayedRef.current = false  // 重置TTS播放标记
 
     try {
       abortControllerRef.current = new AbortController()
@@ -484,6 +533,17 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
                       lastMessage.timestamp = Date.now()
                       // 去除首尾空格，修复空行问题
                       lastMessage.content = lastMessage.content.trim()
+
+                      // ✅ 在content更新完毕后触发TTS自动播放
+                      if (autoPlayAudio && !hasAutoPlayedRef.current && lastMessage.content) {
+                        hasAutoPlayedRef.current = true
+
+                        // 使用setTimeout确保状态已更新到DOM
+                        setTimeout(() => {
+                          console.log('🎵 ChatInterface: regenerate completed事件触发自动播放')
+                          playTTS(lastMessage.content!, agentVoiceType)
+                        }, 100)
+                      }
                     }
                     return newMessages
                   })
