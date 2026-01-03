@@ -25,6 +25,7 @@ export interface ChatMessageProps {
   autoPlayAudio?: boolean
   onRegenerate?: () => void
   onCopy?: () => void
+  stopCurrentAudio?: () => void  // 新增：停止当前音频的函数
 }
 
 export function ChatMessage({
@@ -40,6 +41,7 @@ export function ChatMessage({
   autoPlayAudio = false,
   onRegenerate,
   onCopy,
+  stopCurrentAudio,  // 接收stopCurrentAudio
 }: ChatMessageProps) {
   const isUser = role === 'user'
 
@@ -174,6 +176,7 @@ export function ChatMessage({
                 voiceType={voiceType}
                 isLatest={isLatest}
                 timestamp={timestamp}
+                stopCurrentAudio={stopCurrentAudio}
               />
             )}
           </div>

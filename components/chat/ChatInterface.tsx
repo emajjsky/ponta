@@ -72,6 +72,19 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const hasAutoPlayedRef = useRef(false)  // 防止TTS重复调用
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null)  // 统一管理当前播放的音频
+
+  /**
+   * 停止当前正在播放的音频
+   */
+  const stopCurrentAudio = () => {
+    if (currentAudioRef.current) {
+      console.log('🛑 停止当前音频播放')
+      currentAudioRef.current.pause()
+      currentAudioRef.current.currentTime = 0
+      currentAudioRef.current = null
+    }
+  }
 
   /**
    * 播放TTS语音
@@ -82,6 +95,9 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
         text: text.substring(0, 20),
         voiceType
       })
+
+      // 1. 先停止当前正在播放的音频
+      stopCurrentAudio()
 
       const response = await fetch('/api/voice/tts', {
         method: 'POST',
@@ -98,15 +114,39 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
       const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' })
       const audioUrl = URL.createObjectURL(audioBlob)
 
+      // 2. 创建新音频并保存到currentAudioRef
       const audio = new Audio(audioUrl)
+      currentAudioRef.current = audio
+
+      // 3. 播放完成后清理引用
+      audio.addEventListener('ended', () => {
+        console.log('🎵 ChatInterface: TTS播放完成')
+        currentAudioRef.current = null
+      })
+
       await audio.play()
 
       console.log('🎵 ChatInterface: TTS播放成功')
     } catch (error) {
       console.error('🎵 ChatInterface: TTS播放失败', error)
       toast.error(`语音播放失败: ${error instanceof Error ? error.message : '未知错误'}`)
+      currentAudioRef.current = null  // 播放失败时清理引用
     }
   }
+
+  /**
+   * 组件unmount时停止所有音频
+   */
+  useEffect(() => {
+    return () => {
+      if (currentAudioRef.current) {
+        console.log('🛑 ChatInterface: 组件unmount，停止当前音频')
+        currentAudioRef.current.pause()
+        currentAudioRef.current.currentTime = 0
+        currentAudioRef.current = null
+      }
+    }
+  }, [])
 
   /**
    * 加载历史消息
@@ -252,6 +292,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
     setIsLoading(true)
     setIsStreaming(false)
     hasAutoPlayedRef.current = false  // 重置TTS播放标记
+    stopCurrentAudio()  // 停止当前正在播放的音频
 
     // 添加用户消息到列表
     const userMessageObj: ChatMessageProps = {
@@ -450,6 +491,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
     setIsLoading(true)
     setIsStreaming(false)
     hasAutoPlayedRef.current = false  // 重置TTS播放标记
+    stopCurrentAudio()  // 停止当前正在播放的音频
 
     try {
       abortControllerRef.current = new AbortController()
@@ -625,6 +667,7 @@ export function ChatInterface({ agentSlug, agentName, agentAvatar, agentVoiceTyp
                 autoPlayAudio={isLatest && autoPlayAudio}
                 voiceType={agentVoiceType}
                 isLatest={isLatest}
+                stopCurrentAudio={stopCurrentAudio}
               />
 
             </div>

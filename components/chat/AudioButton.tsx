@@ -15,13 +15,16 @@ export interface AudioButtonProps {
   isLatest?: boolean
   /** 消息时间戳，用于判断是否为新消息 */
   timestamp?: number
+  /** 停止当前音频的函数（从父组件传入） */
+  stopCurrentAudio?: () => void
 }
 
 export function AudioButton({
   text,
   voiceType,
   isLatest = false,
-  timestamp
+  timestamp,
+  stopCurrentAudio
 }: AudioButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -50,6 +53,11 @@ export function AudioButton({
       setIsLoading(true)
       console.log('🎵 AudioButton: 开始调用TTS API')
       toast.loading('正在生成语音...', { id: 'tts-loading' })
+
+      // 先停止当前正在播放的音频（通过父组件的函数）
+      if (stopCurrentAudio) {
+        stopCurrentAudio()
+      }
 
       // 调用TTS API
       const response = await fetch('/api/voice/tts', {
@@ -107,6 +115,17 @@ export function AudioButton({
       return () => audio.removeEventListener('ended', handleEnded)
     }
   }, [isPlaying])
+
+  // 组件unmount时停止音频
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        console.log('🛑 AudioButton: 组件unmount，停止音频')
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+    }
+  }, [])
 
   // 如果不是最新消息，不显示按钮
   if (!isLatest) {
